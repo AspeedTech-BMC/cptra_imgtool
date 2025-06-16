@@ -6,10 +6,10 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.70"
 clap = { version = "3.2.14", default-features = false, features = ["std"] }
+p384 = { version = "0.13", features = ["ecdsa"] }
 serde = "1.0"
 serde_derive = "1.0.136"
-sha2 = "0.10.9" 
+sha2 = "0.10.9"
 hex = "0.4.3"
 toml = "0.7.0"
 zerocopy = { version = "0.8.8", features = ["derive"] }
-

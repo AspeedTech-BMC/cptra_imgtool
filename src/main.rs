@@ -18,6 +18,7 @@ use std::path::{Path, PathBuf};
 use utility::PathBufExt;
 
 mod config;
+mod soc_man;
 mod utility;
 
 fn main() {
@@ -99,6 +100,11 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
 
     /* Wait for the process to exit */
     let _ = child.wait().expect("Failed to wait on child");
+
+    /* Post-Processing to meet aspeed proprietary feature */
+    let mut soc_man = soc_man::AspeedAuthorizationManifest::new(&path.manifest.unwrap_or_err());
+    soc_man.mdy_vnd_ecc_sig(&cfg);
+    soc_man.close();
 
     Ok(())
 }

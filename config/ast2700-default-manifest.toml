@@ -5,8 +5,9 @@ caliptra_sw_auth = "../caliptra-sw/auth-manifest/app/"
 caliptra_mcu_sw = "../caliptra-mcu-sw/"
 
 [manifest_config]
-version = 0
+version = 1
 flags = 0
+vnd_prebuilt_sig = "vnd_ecc_sig.der"
 
 [vendor_fw_key_config]
 ecc_pub_key = "vnd-pub-key-3.pem"

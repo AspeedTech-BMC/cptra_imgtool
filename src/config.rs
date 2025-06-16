@@ -58,7 +58,6 @@ pub(crate) struct AuthManifestConfigFromFile {
     pub image_metadata_list: Vec<ImageMetadataConfigFromFile>,
 }
 
-
 /* Aspeed defined configuration toml file */
 #[derive(Default, Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct AspeedManifestToolDependencies {
@@ -72,11 +71,14 @@ pub(crate) struct AspeedAuthManifestGeneralConfigFromFile {
     pub version: u32,
 
     pub flags: u32,
+
+    pub vnd_prebuilt_sig: String,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
 pub(crate) struct AspeedImageRuntimeConfigFromFile {
     pub caliptra_file: String,
+
     pub mcu_file: String,
 }
 
@@ -112,6 +114,12 @@ pub(crate) struct AspeedAuthManifestConfigFromFile {
 
 impl AspeedAuthManifestConfigFromFile {
     fn find_prebuilt_img_path(&mut self, path: &AspeedManifestCreationPath) {
+        let sig = &self.manifest_config.vnd_prebuilt_sig;
+        self.manifest_config.vnd_prebuilt_sig = match sig.is_empty() {
+            true => String::new(),
+            false => path.prebuilt_dir.join(sig).to_string(),
+        };
+
         self.image_metadata_list = self
             .image_metadata_list
             .iter()
