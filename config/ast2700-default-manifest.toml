@@ -1,0 +1,47 @@
+# Licensed under the Apache-2.0 license
+
+version = 0
+flags = 0
+
+[vendor_fw_key_config]
+ecc_pub_key = "vnd-pub-key-3.pem"
+ecc_priv_key = "vnd-priv-key-3.pem"
+lms_pub_key = "vnd-lms-pub-key-3.pem"
+lms_priv_key = "vnd-lms-priv-key-3.pem"
+
+[vendor_man_key_config]
+ecc_pub_key = "vnd-pub-key-3.pem"
+ecc_priv_key = "vnd-priv-key-3.pem"
+lms_pub_key = "vnd-lms-pub-key-3.pem"
+lms_priv_key = "vnd-lms-priv-key-3.pem"
+
+[owner_fw_key_config]
+ecc_pub_key = "own-pub-key.pem"
+ecc_priv_key = "own-priv-key.pem"
+lms_pub_key = "own-lms-pub-key.pem"
+lms_priv_key = "own-lms-priv-key.pem"
+
+[owner_man_key_config]
+ecc_pub_key = "own-pub-key.pem"
+ecc_priv_key = "own-priv-key.pem"
+lms_pub_key = "own-lms-pub-key.pem"
+lms_priv_key = "own-lms-priv-key.pem"
+
+[[image_metadata_list]]
+file = "atf.bin"
+source = 1
+fw_id = 1
+ignore_auth_check = false
+
+[[image_metadata_list]]
+file = "optee.bin"
+source = 2
+fw_id = 2
+ignore_auth_check = false
+
+[[image_metadata_list]]
+file = "u-boot.bin"
+source = 2
+fw_id = 3
+ignore_auth_check = false
+
