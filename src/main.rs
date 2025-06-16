@@ -15,22 +15,43 @@ Abstract:
 use anyhow::Context;
 use clap::{arg, value_parser, ArgMatches, Command};
 use std::path::{Path, PathBuf};
+use utility::PathBufExt;
 
 mod config;
+mod utility;
 
 fn main() {
-    let sub_cmds = vec![Command::new("create-auth-man")
-        .about("Create a new authorization manifest")
-        .arg(
-            arg!(--"prj" <String> "project name")
-                .required(true)
-                .value_parser(value_parser!(String)),
-        )
-        .arg(
-            arg!(--"out" <FILE> "Output file")
-                .required(false)
-                .value_parser(value_parser!(PathBuf)),
-        )];
+    let sub_cmds = vec![
+        Command::new("create-auth-man")
+            .about("Create a new authorization manifest")
+            .arg(
+                arg!(--"prj" <String> "project name")
+                    .required(true)
+                    .value_parser(value_parser!(String)),
+            )
+            .arg(
+                arg!(--"man" <FILE> "Output manifest file")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            ),
+        Command::new("create-auth-flash")
+            .about("Create a new authorization flash image")
+            .arg(
+                arg!(--"prj" <String> "project name")
+                    .required(true)
+                    .value_parser(value_parser!(String)),
+            )
+            .arg(
+                arg!(--"man" <FILE> "Input manifest file")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"flash" <FILE> "Output flash file")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            ),
+    ];
 
     let cmd: ArgMatches = Command::new("aspeed-auth-man-app")
         .arg_required_else_help(true)
@@ -40,6 +61,7 @@ fn main() {
 
     let result = match cmd.subcommand().unwrap() {
         ("create-auth-man", args) => run_auth_man_cmd(args),
+        ("create-auth-flash", args) => run_auth_flash_cmd(args),
         (_, _) => unreachable!(),
     };
 
@@ -47,25 +69,72 @@ fn main() {
 }
 
 pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
-    let path = config::new_manifest_path_mgnt(args)
+    let path = config::AspeedManifestCreationPath::new_manifest(args)
         .with_context(|| "Failed to create manifest creation path")?;
 
     /* Create caliptra manifest config according to aspeed manifest config */
-    let cfg = config::load_auth_man_config_from_aspeed_file(&path)?;
-    let _ = config::store_auth_man_config_to_file(&cfg, &path)?;
+    let cfg = config::AspeedAuthManifestConfigFromFile::new(&path)?;
+    cfg.save_caliptra_cfg(&path)?;
 
     /* Run the caliptra manifest tool to create the manifest */
-    let root = env!("CARGO_MANIFEST_DIR");
     let mut child = std::process::Command::new("cargo")
         .args([
-            "run", "create-auth-man",
-            "--version", &cfg.version.to_string(),
-            "--flags", &cfg.flags.to_string(),
-            "--key-dir", path.key_dir.to_str().unwrap(),
-            "--config", path.caliptra_cfg.to_str().unwrap(),
-            "--out", path.manifest.to_str().unwrap(),
+            "+1.70",
+            "run",
+            "create-auth-man",
+            "--version",
+            &cfg.manifest_config.version.to_string(),
+            "--flags",
+            &cfg.manifest_config.flags.to_string(),
+            "--key-dir",
+            &path.key_dir.to_string(),
+            "--config",
+            &path.caliptra_cfg.to_string(),
+            "--out",
+            &path.manifest.to_string(),
         ])
-        .current_dir(Path::new(&format!("{}/../caliptra-sw/auth-manifest/app", root)))
+        .current_dir(Path::new(&cfg.authtool.caliptra_sw_auth))
+        .spawn()
+        .expect("Failed to execute command");
+
+    /* Wait for the process to exit */
+    let _ = child.wait().expect("Failed to wait on child");
+
+    Ok(())
+}
+
+pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
+    let path = config::AspeedManifestCreationPath::new_flash(args)
+        .with_context(|| "Failed to create manifest creation path")?;
+
+    /* If the soc manifest does not exist, create it. */
+    if !path.manifest_exists(args) {
+        run_auth_man_cmd(args)?;
+    }
+
+    /* Get the aspeed configuration */
+    let cfg = config::AspeedAuthManifestConfigFromFile::new(&path)?;
+
+    /* Runt the caliptra flash image tool to create the flash image */
+    let bl_list_args = std::iter::once("--soc-images")
+        .chain(cfg.image_metadata_list.iter().map(|s| s.file.as_str()))
+        .collect::<Vec<_>>();
+    let mut child = std::process::Command::new("cargo")
+        .args([
+            "xtask",
+            "flash-image",
+            "create",
+            "--caliptra-fw",
+            &cfg.image_runtime_list.caliptra_file,
+            "--soc-manifest",
+            &path.manifest.to_string(),
+            "--mcu-runtime",
+            &cfg.image_runtime_list.mcu_file,
+            "--output",
+            &path.flash_image.to_string(),
+        ])
+        .args(bl_list_args)
+        .current_dir(Path::new(&cfg.authtool.caliptra_mcu_sw))
         .spawn()
         .expect("Failed to execute command");
 

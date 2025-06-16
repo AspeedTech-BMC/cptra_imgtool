@@ -13,13 +13,16 @@ Abstract:
 --*/
 
 use anyhow::Context;
-use hex;
-use sha2::{Sha384, Digest};
 use clap::ArgMatches;
+use hex;
 use serde_derive::{Deserialize, Serialize};
+use sha2::{Digest, Sha384};
 use std::io::Write;
 use std::path::PathBuf;
 
+use crate::utility::PathBufExt;
+
+/*  Caliptra defined configuration toml file  */
 #[derive(Default, Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct AuthManifestKeyConfigFromFile {
     pub ecc_pub_key: String,
@@ -55,7 +58,29 @@ pub(crate) struct AuthManifestConfigFromFile {
     pub image_metadata_list: Vec<ImageMetadataConfigFromFile>,
 }
 
+
+/* Aspeed defined configuration toml file */
+#[derive(Default, Serialize, Deserialize, Debug, Clone)]
+pub(crate) struct AspeedManifestToolDependencies {
+    pub caliptra_sw_auth: String,
+
+    pub caliptra_mcu_sw: String,
+}
+
+#[derive(Default, Serialize, Deserialize, Debug, Clone)]
+pub(crate) struct AspeedAuthManifestGeneralConfigFromFile {
+    pub version: u32,
+
+    pub flags: u32,
+}
+
 #[derive(Default, Serialize, Deserialize, Debug)]
+pub(crate) struct AspeedImageRuntimeConfigFromFile {
+    pub caliptra_file: String,
+    pub mcu_file: String,
+}
+
+#[derive(Default, Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct AspeedImageMetadataConfigFromFile {
     pub file: String,
 
@@ -68,9 +93,9 @@ pub(crate) struct AspeedImageMetadataConfigFromFile {
 
 #[derive(Default, Serialize, Deserialize, Debug)]
 pub(crate) struct AspeedAuthManifestConfigFromFile {
-    pub version: u32,
+    pub authtool: AspeedManifestToolDependencies,
 
-    pub flags: u32,
+    pub manifest_config: AspeedAuthManifestGeneralConfigFromFile,
 
     pub vendor_fw_key_config: AuthManifestKeyConfigFromFile,
 
@@ -80,108 +105,184 @@ pub(crate) struct AspeedAuthManifestConfigFromFile {
 
     pub owner_man_key_config: Option<AuthManifestKeyConfigFromFile>,
 
+    pub image_runtime_list: AspeedImageRuntimeConfigFromFile,
+
     pub image_metadata_list: Vec<AspeedImageMetadataConfigFromFile>,
 }
 
-pub(crate) struct ManifestCreationPath {
-    pub aspeed_cfg: PathBuf,
+impl AspeedAuthManifestConfigFromFile {
+    fn find_prebuilt_img_path(&mut self, path: &AspeedManifestCreationPath) {
+        self.image_metadata_list = self
+            .image_metadata_list
+            .iter()
+            .map(|img| {
+                let new_file = path.prebuilt_dir.join(&img.file);
+                AspeedImageMetadataConfigFromFile {
+                    file: new_file.to_string(),
+                    ..(*img).clone()
+                }
+            })
+            .collect::<Vec<_>>();
 
-    pub caliptra_cfg: PathBuf,
-
-    pub key_dir: PathBuf,
-
-    pub prebuilt_dir: PathBuf,
-
-    pub manifest: PathBuf,
-}
-
-pub(crate) fn new_manifest_path_mgnt(args: &ArgMatches) -> anyhow::Result<ManifestCreationPath> {
-    let prj: &String = args
-        .get_one::<String>("prj")
-        .with_context(|| "prj arg not specified")?;
-
-    let root = env!("CARGO_MANIFEST_DIR");
-
-    let manifest = args
-        .get_one::<PathBuf>("out")
-        .cloned()
-        .unwrap_or_else(|| PathBuf::from(format!("{}/out/{}-auth-manifest.bin", root, prj)));
-
-    let aspeed_cfg = PathBuf::from(format!("{}/config/{}-manifest.toml", root, prj));
-    let caliptra_cfg: PathBuf = PathBuf::from(format!("{}/out/{}-manifest.toml", root, prj));
-    let key_dir: PathBuf = PathBuf::from(format!("{}/key/{}/", root, prj));
-    let prebuilt_dir: PathBuf = PathBuf::from(format!("{}/prebuilt/{}/", root, prj));
-
-    if !aspeed_cfg.exists() || !key_dir.exists() || !prebuilt_dir.exists() {
-        return Err(anyhow::anyhow!("Invalid config file path"));
+        self.image_runtime_list.caliptra_file = path
+            .prebuilt_dir
+            .join(&self.image_runtime_list.caliptra_file)
+            .to_string();
+        self.image_runtime_list.mcu_file = path
+            .prebuilt_dir
+            .join(&self.image_runtime_list.mcu_file)
+            .to_string();
     }
 
-    Ok(ManifestCreationPath {
-        aspeed_cfg: aspeed_cfg,
-        caliptra_cfg: caliptra_cfg,
-        key_dir: key_dir,
-        prebuilt_dir: prebuilt_dir,
-        manifest: manifest,
-    })
-}
-
-pub(crate) fn load_auth_man_config_from_aspeed_file(
-    path_mngt: &ManifestCreationPath,
-) -> anyhow::Result<AspeedAuthManifestConfigFromFile> {
-    let config_str = std::fs::read_to_string(&path_mngt.aspeed_cfg).with_context(|| {
-        format!(
-            "Failed to read the config file {}",
-            path_mngt.aspeed_cfg.display()
-        )
-    })?;
-
-    let config: AspeedAuthManifestConfigFromFile =
-        toml::from_str(&config_str).with_context(|| {
+    pub(crate) fn new(
+        path: &AspeedManifestCreationPath,
+    ) -> anyhow::Result<AspeedAuthManifestConfigFromFile> {
+        let config_str = std::fs::read_to_string(&path.aspeed_cfg).with_context(|| {
             format!(
-                "Failed to parse the config file {}",
-                path_mngt.aspeed_cfg.display()
+                "Failed to read the config file {}",
+                path.aspeed_cfg.display()
             )
         })?;
 
-    Ok(config)
+        let mut config: AspeedAuthManifestConfigFromFile = toml::from_str(&config_str)
+            .with_context(|| {
+                format!(
+                    "Failed to parse the config file {}",
+                    path.aspeed_cfg.display()
+                )
+            })?;
+
+        config.find_prebuilt_img_path(path);
+
+        Ok(config)
+    }
+
+    pub(crate) fn save_caliptra_cfg(
+        &self,
+        path_mngt: &AspeedManifestCreationPath,
+    ) -> anyhow::Result<()> {
+        let mut cfg: AuthManifestConfigFromFile = AuthManifestConfigFromFile::default();
+
+        /* Read the configuration from aspeed manifest configuration */
+        cfg.vendor_fw_key_config = self.vendor_fw_key_config.clone();
+        cfg.vendor_man_key_config = self.vendor_man_key_config.clone();
+        cfg.owner_fw_key_config = self.owner_fw_key_config.clone();
+        cfg.owner_man_key_config = self.owner_man_key_config.clone();
+        cfg.image_metadata_list = self
+            .image_metadata_list
+            .iter()
+            .map(|img| {
+                let data = std::fs::read(&img.file).unwrap();
+                let digest = hex::encode(Sha384::digest(&data));
+                ImageMetadataConfigFromFile {
+                    digest: digest,
+                    source: img.source,
+                    fw_id: img.fw_id,
+                    ignore_auth_check: img.ignore_auth_check,
+                }
+            })
+            .collect();
+
+        /* Create the caliptra manifest read from aspeed manifest config */
+        let caliptra_cfg = &path_mngt.caliptra_cfg.unwrap_or_err();
+        let mut out_file = std::fs::OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(caliptra_cfg)
+            .with_context(|| format!("Failed to create file {}", caliptra_cfg.display()))?;
+
+        out_file.write_all(toml::to_string(&cfg).unwrap().as_bytes())?;
+
+        Ok(())
+    }
 }
 
-pub(crate) fn store_auth_man_config_to_file(
-    config: &AspeedAuthManifestConfigFromFile,
-    path_mngt: &ManifestCreationPath,
-) -> anyhow::Result<()> {
-    let mut cfg_file: AuthManifestConfigFromFile = AuthManifestConfigFromFile::default();
+#[derive(Debug)]
+pub(crate) struct AspeedManifestCreationPath {
+    pub prebuilt_dir: PathBuf,
 
-    /* Read the configuration from aspeed manifest configuration */
-    cfg_file.vendor_fw_key_config = config.vendor_fw_key_config.clone();
-    cfg_file.vendor_man_key_config = config.vendor_man_key_config.clone();
-    cfg_file.owner_fw_key_config = config.owner_fw_key_config.clone();
-    cfg_file.owner_man_key_config = config.owner_man_key_config.clone();
-    cfg_file.image_metadata_list = config
-        .image_metadata_list
-        .iter()
-        .map(|img| {
-            let data = std::fs::read(path_mngt.prebuilt_dir.join(&img.file)).unwrap();
-            // let digest = Crypto {}.sha384_digest(&data).unwrap();
-            let digest = hex::encode(Sha384::digest(&data));
-            ImageMetadataConfigFromFile {
-                digest: digest,
-                source: img.source,
-                fw_id: img.fw_id,
-                ignore_auth_check: img.ignore_auth_check,
-            }
+    pub key_dir: Option<PathBuf>,
+
+    pub aspeed_cfg: PathBuf,
+
+    pub caliptra_cfg: Option<PathBuf>,
+
+    pub manifest: Option<PathBuf>,
+
+    pub flash_image: Option<PathBuf>,
+}
+
+impl AspeedManifestCreationPath {
+    fn get_prebuilt_dir_path(prj: &String) -> PathBuf {
+        PathBuf::from(format!("prebuilt/{}/", prj)).to_absolute()
+    }
+
+    fn get_key_dir_path(prj: &String) -> PathBuf {
+        PathBuf::from(format!("key/{}/", prj)).to_absolute()
+    }
+
+    fn get_aspeed_cfg_path(prj: &String) -> PathBuf {
+        PathBuf::from(format!("config/{}-manifest.toml", prj)).to_absolute()
+    }
+
+    fn get_caliptra_cfg_path() -> PathBuf {
+        PathBuf::from("config/caliptra-manifest.toml").to_absolute()
+    }
+
+    fn get_manifest_path(args: &ArgMatches, prj: &String) -> PathBuf {
+        let manifest = args
+            .get_one::<PathBuf>("man")
+            .cloned()
+            .unwrap_or_def(PathBuf::from(format!("out/{}-auth-manifest.bin", prj)));
+
+        manifest.to_absolute()
+    }
+
+    fn get_flash_image_path(args: &ArgMatches, prj: &String) -> PathBuf {
+        let flash = args
+            .get_one::<PathBuf>("flash")
+            .cloned()
+            .unwrap_or_def(PathBuf::from(format!("out/{}-flash-image.bin", prj)));
+
+        flash.to_absolute()
+    }
+
+    pub(crate) fn new_manifest(args: &ArgMatches) -> anyhow::Result<AspeedManifestCreationPath> {
+        let prj: &String = args
+            .get_one::<String>("prj")
+            .with_context(|| "prj arg not specified")?;
+
+        Ok(AspeedManifestCreationPath {
+            prebuilt_dir: Self::get_prebuilt_dir_path(prj),
+            key_dir: Some(Self::get_key_dir_path(prj)),
+            aspeed_cfg: Self::get_aspeed_cfg_path(prj),
+            caliptra_cfg: Some(Self::get_caliptra_cfg_path()),
+            manifest: Some(Self::get_manifest_path(args, prj)),
+            flash_image: None,
         })
-        .collect();
+    }
 
-    /* Create the caliptra manifest read from aspeed manifest config */
-    let mut out_file = std::fs::OpenOptions::new()
-        .create(true)
-        .truncate(true)
-        .write(true)
-        .open(&path_mngt.caliptra_cfg)
-        .with_context(|| format!("Failed to create file {}", path_mngt.caliptra_cfg.display()))?;
+    pub(crate) fn new_flash(args: &ArgMatches) -> anyhow::Result<AspeedManifestCreationPath> {
+        let prj: &String = args
+            .get_one::<String>("prj")
+            .with_context(|| "prj arg not specified")?;
 
-    out_file.write_all(toml::to_string(&cfg_file).unwrap().as_bytes())?;
+        Ok(AspeedManifestCreationPath {
+            prebuilt_dir: Self::get_prebuilt_dir_path(prj),
+            key_dir: None,
+            aspeed_cfg: Self::get_aspeed_cfg_path(prj),
+            caliptra_cfg: None,
+            manifest: Some(Self::get_manifest_path(args, prj)),
+            flash_image: Some(Self::get_flash_image_path(args, prj)),
+        })
+    }
 
-    Ok(())
+    pub(crate) fn manifest_exists(&self, args: &ArgMatches) -> bool {
+        args.get_one::<String>("prj").map_or(false, |prj| {
+            // perform check with `prj`
+            let manifest = Self::get_manifest_path(args, prj);
+            manifest.exists() && manifest.is_file()
+        })
+    }
 }

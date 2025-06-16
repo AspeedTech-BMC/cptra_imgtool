@@ -1,5 +1,10 @@
 # Licensed under the Apache-2.0 license
 
+[authtool]
+caliptra_sw_auth = "../caliptra-sw/auth-manifest/app/"
+caliptra_mcu_sw = "../caliptra-mcu-sw/"
+
+[manifest_config]
 version = 0
 flags = 0
 
@@ -26,6 +31,10 @@ ecc_pub_key = "own-pub-key.pem"
 ecc_priv_key = "own-priv-key.pem"
 lms_pub_key = "own-lms-pub-key.pem"
 lms_priv_key = "own-lms-priv-key.pem"
+
+[image_runtime_list]
+caliptra_file = "caliptra-fw-v1.2.bin"
+mcu_file = "u-boot-spl.bin"
 
 [[image_metadata_list]]
 file = "atf.bin"
