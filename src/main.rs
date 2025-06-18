@@ -123,7 +123,12 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
 
     /* Run the caliptra flash image tool to create the flash image */
     let bl_list_args = std::iter::once("--soc-images")
-        .chain(cfg.image_metadata_list.iter().map(|s| s.file.as_str()))
+        .chain(
+            cfg.image_metadata_list
+                .iter()
+                .map(|s| s.file.as_str())
+                .filter(|&filename| filename != cfg.image_runtime_list.mcu_file),
+        )
         .collect::<Vec<_>>();
     let mut child = std::process::Command::new("cargo")
         .args([

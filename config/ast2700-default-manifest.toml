@@ -38,20 +38,26 @@ caliptra_file = "caliptra-fw-v1.2.bin"
 mcu_file = "u-boot-spl.bin"
 
 [[image_metadata_list]]
-file = "atf.bin"
+file = "u-boot-spl.bin"
 source = 1
 fw_id = 1
 ignore_auth_check = false
 
 [[image_metadata_list]]
+file = "atf.bin"
+source = 1
+fw_id = 10
+ignore_auth_check = false
+
+[[image_metadata_list]]
 file = "optee.bin"
 source = 2
-fw_id = 2
+fw_id = 11
 ignore_auth_check = false
 
 [[image_metadata_list]]
 file = "u-boot.bin"
 source = 2
-fw_id = 3
+fw_id = 12
 ignore_auth_check = false
 
