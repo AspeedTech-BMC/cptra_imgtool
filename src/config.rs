@@ -253,6 +253,10 @@ impl AspeedManifestCreationPath {
             .cloned()
             .unwrap_or_def(PathBuf::from(format!("out/{}-flash-image.bin", prj)));
 
+        if flash.is_file() {
+            let _ = std::fs::remove_file(&flash);
+        }
+
         flash.to_absolute()
     }
 
