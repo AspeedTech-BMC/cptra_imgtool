@@ -113,8 +113,8 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let path = config::AspeedManifestCreationPath::new_flash(args)
         .with_context(|| "Failed to create manifest creation path")?;
 
-    /* If the soc manifest does not exist, create it. */
-    if !path.manifest_exists(args) {
+    /* If the user didn't specify the prebuild manifest, create it. */
+    if !args.contains_id("man") {
         run_auth_man_cmd(args)?;
     }
 
