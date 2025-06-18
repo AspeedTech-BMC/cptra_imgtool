@@ -113,10 +113,16 @@ impl AspeedAuthorizationManifest {
             return;
         }
 
+        /* Read signature from der and convery it to hardware endian */
         let sig_der = std::fs::read(prebuilt_sig).expect("Failed to read the prebuilt signature");
         let sig_raw = Signature::from_der(&sig_der)
             .expect("Failed to parse DER signature")
-            .to_vec();
+            .to_vec()
+            .chunks_exact(4)
+            .flat_map(|chunk| {
+                u32::from_le_bytes(chunk.try_into().expect("Chunk size mismatch")).to_be_bytes()
+            })
+            .collect::<Vec<u8>>();
 
         self.preamble.vnd_manifest_ecc_pubk = [0; 96];
         self.preamble.vnd_manifest_lms_pubk = [0; 48];

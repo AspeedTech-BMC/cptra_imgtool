@@ -121,7 +121,7 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     /* Get the aspeed configuration */
     let cfg = config::AspeedAuthManifestConfigFromFile::new(&path)?;
 
-    /* Runt the caliptra flash image tool to create the flash image */
+    /* Run the caliptra flash image tool to create the flash image */
     let bl_list_args = std::iter::once("--soc-images")
         .chain(cfg.image_metadata_list.iter().map(|s| s.file.as_str()))
         .collect::<Vec<_>>();
