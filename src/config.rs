@@ -112,6 +112,12 @@ pub(crate) struct AspeedAuthManifestConfigFromFile {
     pub image_metadata_list: Vec<AspeedImageMetadataConfigFromFile>,
 }
 
+fn pad_to_aligned(mut data: Vec<u8>, pad: u8, aligned: usize) -> Vec<u8> {
+    let pad_len = (aligned - (data.len() % aligned)) % aligned;
+    data.extend(vec![pad; pad_len]);
+    data
+}
+
 impl AspeedAuthManifestConfigFromFile {
     fn find_prebuilt_img_path(&mut self, path: &AspeedManifestCreationPath) {
         let sig = &self.manifest_config.vnd_prebuilt_sig;
@@ -181,7 +187,8 @@ impl AspeedAuthManifestConfigFromFile {
             .iter()
             .map(|img| {
                 let data = std::fs::read(&img.file).unwrap();
-                let digest = hex::encode(Sha384::digest(&data));
+                let data_align = pad_to_aligned(data, 0, 4);
+                let digest = hex::encode(Sha384::digest(&data_align));
                 ImageMetadataConfigFromFile {
                     digest: digest,
                     source: img.source,
