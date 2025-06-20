@@ -30,6 +30,7 @@ fi
 if [ ! -d $CPTRA_MCU_SW_DIR ]; then
     cptra_printf "Cloning caliptra-mcu-sw repository..."
     git clone https://github.com/chipsalliance/caliptra-mcu-sw.git $CPTRA_MCU_SW_DIR
+    sed -i 's/^const MCU_RT_IDENTIFIER: u32 = 0x00000002;/const MCU_RT_IDENTIFIER: u32 = 0x00000003;/' $CPTRA_MCU_SW_DIR/builder/src/flash_image.rs
 else
     cptra_printf "Caliptra-mcu-sw repository already exists."
 fi
