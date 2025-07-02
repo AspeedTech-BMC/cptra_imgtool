@@ -7,6 +7,7 @@ caliptra_mcu_sw = "../caliptra-mcu-sw/"
 [manifest_config]
 version = 1
 flags = 0
+security_version = 1
 vnd_prebuilt_sig = "vnd_ecc_sig.der"
 
 [vendor_fw_key_config]

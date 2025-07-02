@@ -72,6 +72,8 @@ pub(crate) struct AspeedAuthManifestGeneralConfigFromFile {
 
     pub flags: u32,
 
+    pub security_version: u32,
+
     pub vnd_prebuilt_sig: String,
 }
 
