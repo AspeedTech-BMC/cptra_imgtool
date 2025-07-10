@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.70"
-base64ct = "=1.7.3"
 clap = { version = "3.2.14", default-features = false, features = ["std"] }
 p384 = { version = "0.13", features = ["ecdsa"] }
 serde = "1.0"
