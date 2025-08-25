@@ -91,9 +91,9 @@ function config_manifest_config
     # Use prebuilt vendor firmware key signature
     vnd_fw_prvk=$(echo ${ECC_KEY_PAIR[${key_pair}_vnd_fw]} | awk '{print $1}')
     if [ $vnd_fw_prvk == 'vnd-fw-ecc-prvk-0' ]; then
-        echo 'vnd_prebuilt_sig = "vnd_ecc_sig.der"' >> $cfg_file
+        echo 'vnd_ecc_sig = "vnd_ecc_sig.der"' >> $cfg_file
     else
-        echo 'vnd_prebuilt_sig = ""' >> $cfg_file
+        echo 'vnd_ecc_sig = ""' >> $cfg_file
     fi
 
     echo '' >> $cfg_file
