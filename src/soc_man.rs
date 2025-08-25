@@ -156,11 +156,11 @@ impl AspeedAuthorizationManifest {
     }
 
     pub(crate) fn modify_vnd_ecc_sig(&mut self, cfg: &config::AspeedAuthManifestConfigFromFile) {
-        if cfg.manifest_config.vnd_prebuilt_sig.is_empty() {
+        if cfg.manifest_config.vnd_ecc_sig.is_empty() {
             return;
         }
 
-        let prebuilt_sig = Path::new(&cfg.manifest_config.vnd_prebuilt_sig);
+        let prebuilt_sig = Path::new(&cfg.manifest_config.vnd_ecc_sig);
         if !prebuilt_sig.exists() || !prebuilt_sig.is_file() {
             return;
         }

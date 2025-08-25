@@ -74,7 +74,7 @@ pub(crate) struct AspeedAuthManifestGeneralConfigFromFile {
 
     pub security_version: u32,
 
-    pub vnd_prebuilt_sig: String,
+    pub vnd_ecc_sig: String,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
@@ -122,8 +122,8 @@ fn pad_to_aligned(mut data: Vec<u8>, pad: u8, aligned: usize) -> Vec<u8> {
 
 impl AspeedAuthManifestConfigFromFile {
     fn find_prebuilt_img_path(&mut self, path: &AspeedManifestCreationPath) {
-        let sig = &self.manifest_config.vnd_prebuilt_sig;
-        self.manifest_config.vnd_prebuilt_sig = match sig.is_empty() {
+        let sig = &self.manifest_config.vnd_ecc_sig;
+        self.manifest_config.vnd_ecc_sig = match sig.is_empty() {
             true => String::new(),
             false => path.prebuilt_dir.join(sig).to_string(),
         };
