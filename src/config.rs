@@ -75,6 +75,8 @@ pub(crate) struct AspeedAuthManifestGeneralConfigFromFile {
     pub security_version: u32,
 
     pub vnd_ecc_sig: String,
+
+    pub vnd_lms_sig: String,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
@@ -124,6 +126,12 @@ impl AspeedAuthManifestConfigFromFile {
     fn find_prebuilt_img_path(&mut self, path: &AspeedManifestCreationPath) {
         let sig = &self.manifest_config.vnd_ecc_sig;
         self.manifest_config.vnd_ecc_sig = match sig.is_empty() {
+            true => String::new(),
+            false => path.prebuilt_dir.join(sig).to_string(),
+        };
+
+        let sig = &self.manifest_config.vnd_lms_sig;
+        self.manifest_config.vnd_lms_sig = match sig.is_empty() {
             true => String::new(),
             false => path.prebuilt_dir.join(sig).to_string(),
         };

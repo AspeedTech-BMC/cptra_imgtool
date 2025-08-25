@@ -104,6 +104,7 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     /* Post-Processing to meet aspeed proprietary feature */
     let mut soc_man = soc_man::AspeedAuthorizationManifest::new(&path.manifest.unwrap_or_err());
     soc_man.modify_vnd_ecc_sig(&cfg);
+    soc_man.modify_vnd_lms_sig(&cfg);
     soc_man.insert_security_version(&path, &cfg);
     soc_man.close();
 

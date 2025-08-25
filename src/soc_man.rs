@@ -177,8 +177,23 @@ impl AspeedAuthorizationManifest {
             .collect::<Vec<u8>>();
 
         self.preamble.vnd_manifest_ecc_pubk = [0; ECC384_PUBK_SIZE];
-        self.preamble.vnd_manifest_lms_pubk = [0; LMS_PUBK_SIZE];
         self.preamble.vnd_manifest_ecc_sig = sig_raw.try_into().expect("Signature size mismatch");
+    }
+
+    pub(crate) fn modify_vnd_lms_sig(&mut self, cfg: &config::AspeedAuthManifestConfigFromFile) {
+        if cfg.manifest_config.vnd_lms_sig.is_empty() {
+            return;
+        }
+
+        let prebuilt_sig = Path::new(&cfg.manifest_config.vnd_lms_sig);
+        if !prebuilt_sig.exists() || !prebuilt_sig.is_file() {
+            return;
+        }
+
+        let sig_raw = std::fs::read(prebuilt_sig).expect("Failed to read the prebuilt signature");
+
+        self.preamble.vnd_manifest_lms_pubk = [0; LMS_PUBK_SIZE];
+        self.preamble.vnd_manifest_lms_sig = sig_raw.try_into().expect("Signature size mismatch");
     }
 
     pub(crate) fn insert_security_version(
