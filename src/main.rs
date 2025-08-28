@@ -14,7 +14,7 @@ Abstract:
 
 use anyhow::Context;
 use clap::{arg, value_parser, ArgMatches, Command};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use utility::PathBufExt;
 
 mod config;
@@ -54,7 +54,7 @@ fn main() {
             ),
     ];
 
-    let cmd: ArgMatches = Command::new("cptra_imgtool")
+    let cmd: ArgMatches = Command::new("cptra-imgtool")
         .arg_required_else_help(true)
         .subcommands(sub_cmds)
         .about("Aspeed authorization manifest tools")
@@ -78,10 +78,9 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     cfg.save_caliptra_cfg(&path)?;
 
     /* Run the caliptra manifest tool to create the manifest */
-    let mut child = std::process::Command::new("cargo")
+    let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
+    let mut child = std::process::Command::new(cmd)
         .args([
-            "+1.70",
-            "run",
             "create-auth-man",
             "--version",
             &cfg.manifest_config.version.to_string(),
@@ -94,7 +93,6 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
             "--out",
             &path.manifest.to_string(),
         ])
-        .current_dir(Path::new(&cfg.authtool.caliptra_sw_auth))
         .spawn()
         .expect("Failed to execute command");
 
@@ -132,9 +130,10 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
                 .filter(|&filename| filename != cfg.image_runtime_list.mcu_file),
         )
         .collect::<Vec<_>>();
-    let mut child = std::process::Command::new("cargo")
+
+    let cmd = path.tool_dir.join("xtask");
+    let mut child = std::process::Command::new(cmd)
         .args([
-            "xtask",
             "flash-image",
             "create",
             "--caliptra-fw",
@@ -147,7 +146,6 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
             &path.flash_image.to_string(),
         ])
         .args(bl_list_args)
-        .current_dir(Path::new(&cfg.authtool.caliptra_mcu_sw))
         .spawn()
         .expect("Failed to execute command");
 

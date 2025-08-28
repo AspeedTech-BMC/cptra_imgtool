@@ -202,10 +202,9 @@ impl AspeedAuthorizationManifest {
         cfg: &config::AspeedAuthManifestConfigFromFile,
     ) {
         let svn_sig_file = PathBuf::from(format!("out/svn_sig.bin")).to_absolute();
-        let mut child = std::process::Command::new("cargo")
+        let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
+        let mut child = std::process::Command::new(cmd)
             .args([
-                "+1.70",
-                "run",
                 "create-sig-svn",
                 "--version",
                 &cfg.manifest_config.version.to_string(),
@@ -220,7 +219,6 @@ impl AspeedAuthorizationManifest {
                 "--out",
                 &svn_sig_file.to_string(),
             ])
-            .current_dir(Path::new(&cfg.authtool.caliptra_sw_auth))
             .spawn()
             .expect("Failed to execute command");
 

@@ -1,9 +1,5 @@
 # Licensed under the Apache-2.0 license
 
-[authtool]
-caliptra_sw_auth = "../caliptra-sw/auth-manifest/app/"
-caliptra_mcu_sw = "../caliptra-mcu-sw/"
-
 [manifest_config]
 version = 1
 flags = 0

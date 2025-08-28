@@ -17,6 +17,7 @@ use clap::ArgMatches;
 use hex;
 use serde_derive::{Deserialize, Serialize};
 use sha2::{Digest, Sha384};
+use std::env;
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -99,8 +100,6 @@ pub(crate) struct AspeedImageMetadataConfigFromFile {
 
 #[derive(Default, Serialize, Deserialize, Debug)]
 pub(crate) struct AspeedAuthManifestConfigFromFile {
-    pub authtool: AspeedManifestToolDependencies,
-
     pub manifest_config: AspeedAuthManifestGeneralConfigFromFile,
 
     pub vendor_fw_key_config: AuthManifestKeyConfigFromFile,
@@ -227,6 +226,8 @@ impl AspeedAuthManifestConfigFromFile {
 pub(crate) struct AspeedManifestCreationPath {
     pub prebuilt_dir: PathBuf,
 
+    pub tool_dir: PathBuf,
+
     pub key_dir: Option<PathBuf>,
 
     pub aspeed_cfg: PathBuf,
@@ -277,6 +278,25 @@ impl AspeedManifestCreationPath {
         flash.to_absolute()
     }
 
+    fn get_tool_path() -> PathBuf {
+        let cur_exe = env::current_exe().unwrap().parent().unwrap().to_path_buf();
+        let paths = [
+            PathBuf::from("./target/release").to_absolute(),
+            PathBuf::from("./target/debug").to_absolute(),
+        ];
+
+        for path in paths.iter() {
+            let man_tool = path.join("caliptra-auth-manifest-app");
+            let flash_tool = path.join("xtask");
+
+            if man_tool.is_file() && flash_tool.is_file() {
+                return path.to_absolute();
+            }
+        }
+
+        cur_exe.to_absolute()
+    }
+
     pub(crate) fn new_manifest(args: &ArgMatches) -> anyhow::Result<AspeedManifestCreationPath> {
         let prj: &String = args
             .get_one::<String>("prj")
@@ -284,6 +304,7 @@ impl AspeedManifestCreationPath {
 
         Ok(AspeedManifestCreationPath {
             prebuilt_dir: Self::get_prebuilt_dir_path(prj),
+            tool_dir: Self::get_tool_path(),
             key_dir: Some(Self::get_key_dir_path(prj)),
             aspeed_cfg: Self::get_aspeed_cfg_path(prj),
             caliptra_cfg: Some(Self::get_caliptra_cfg_path()),
@@ -299,6 +320,7 @@ impl AspeedManifestCreationPath {
 
         Ok(AspeedManifestCreationPath {
             prebuilt_dir: Self::get_prebuilt_dir_path(prj),
+            tool_dir: Self::get_tool_path(),
             key_dir: None,
             aspeed_cfg: Self::get_aspeed_cfg_path(prj),
             caliptra_cfg: None,
