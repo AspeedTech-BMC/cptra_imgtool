@@ -15,31 +15,20 @@ Abstract:
 use std::path::PathBuf;
 
 pub trait PathBufExt {
-    fn to_absolute(&self) -> PathBuf;
     fn unwrap_or_def(&self, default: PathBuf) -> PathBuf;
     fn unwrap_or_err(&self) -> PathBuf;
     fn to_string(&self) -> String;
 }
 
 impl PathBufExt for Option<PathBuf> {
-    fn to_absolute(&self) -> PathBuf {
-        match self {
-            Some(path) => match path.is_absolute() {
-                true => path.clone(),
-                false => PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(path),
-            },
-            None => PathBuf::new(),
-        }
-    }
-
     fn unwrap_or_err(&self) -> PathBuf {
-        self.as_ref().expect("Unknown path format").to_absolute()
+        self.as_ref().expect("Unknown path format").to_path_buf()
     }
 
     fn unwrap_or_def(&self, default: PathBuf) -> PathBuf {
         match self {
-            Some(p) => p.to_absolute(),
-            None => default.to_absolute(),
+            Some(p) => p.to_path_buf(),
+            None => default,
         }
     }
 
@@ -52,19 +41,12 @@ impl PathBufExt for Option<PathBuf> {
 }
 
 impl PathBufExt for PathBuf {
-    fn to_absolute(&self) -> PathBuf {
-        match self.is_absolute() {
-            true => self.to_path_buf(),
-            false => PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(self),
-        }
-    }
-
     fn unwrap_or_def(&self, _default: PathBuf) -> PathBuf {
-        self.to_absolute()
+        self.to_path_buf()
     }
 
     fn unwrap_or_err(&self) -> PathBuf {
-        self.to_absolute()
+        self.to_path_buf()
     }
 
     fn to_string(&self) -> String {

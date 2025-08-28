@@ -241,19 +241,19 @@ pub(crate) struct AspeedManifestCreationPath {
 
 impl AspeedManifestCreationPath {
     fn get_prebuilt_dir_path(prj: &String) -> PathBuf {
-        PathBuf::from(format!("prebuilt/{}/", prj)).to_absolute()
+        PathBuf::from(format!("prebuilt/{}/", prj))
     }
 
     fn get_key_dir_path(prj: &String) -> PathBuf {
-        PathBuf::from(format!("key/{}/", prj)).to_absolute()
+        PathBuf::from(format!("key/{}/", prj))
     }
 
     fn get_aspeed_cfg_path(prj: &String) -> PathBuf {
-        PathBuf::from(format!("config/{}-manifest.toml", prj)).to_absolute()
+        PathBuf::from(format!("config/{}-manifest.toml", prj))
     }
 
     fn get_caliptra_cfg_path() -> PathBuf {
-        PathBuf::from("config/caliptra-manifest.toml").to_absolute()
+        PathBuf::from("config/caliptra-manifest.toml")
     }
 
     fn get_manifest_path(args: &ArgMatches, prj: &String) -> PathBuf {
@@ -262,7 +262,7 @@ impl AspeedManifestCreationPath {
             .cloned()
             .unwrap_or_def(PathBuf::from(format!("out/{}-auth-manifest.bin", prj)));
 
-        manifest.to_absolute()
+        manifest
     }
 
     fn get_flash_image_path(args: &ArgMatches, prj: &String) -> PathBuf {
@@ -275,14 +275,14 @@ impl AspeedManifestCreationPath {
             let _ = std::fs::remove_file(&flash);
         }
 
-        flash.to_absolute()
+        flash
     }
 
     fn get_tool_path() -> PathBuf {
         let cur_exe = env::current_exe().unwrap().parent().unwrap().to_path_buf();
         let paths = [
-            PathBuf::from("./target/release").to_absolute(),
-            PathBuf::from("./target/debug").to_absolute(),
+            PathBuf::from("./target/release"),
+            PathBuf::from("./target/debug"),
         ];
 
         for path in paths.iter() {
@@ -290,11 +290,11 @@ impl AspeedManifestCreationPath {
             let flash_tool = path.join("xtask");
 
             if man_tool.is_file() && flash_tool.is_file() {
-                return path.to_absolute();
+                return path.to_path_buf();
             }
         }
 
-        cur_exe.to_absolute()
+        cur_exe
     }
 
     pub(crate) fn new_manifest(args: &ArgMatches) -> anyhow::Result<AspeedManifestCreationPath> {

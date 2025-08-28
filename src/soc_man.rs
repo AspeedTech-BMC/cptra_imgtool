@@ -201,7 +201,7 @@ impl AspeedAuthorizationManifest {
         path: &config::AspeedManifestCreationPath,
         cfg: &config::AspeedAuthManifestConfigFromFile,
     ) {
-        let svn_sig_file = PathBuf::from(format!("out/svn_sig.bin")).to_absolute();
+        let svn_sig_file = PathBuf::from(format!("out/svn_sig.bin"));
         let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
         let mut child = std::process::Command::new(cmd)
             .args([
