@@ -6,6 +6,8 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.70"
 clap = { version = "3.2.14", default-features = false, features = ["std"] }
+env_logger = "0.11"
+log = "0.4"
 p384 = { version = "0.13", features = ["ecdsa"] }
 serde = "1.0"
 serde_derive = "1.0.136"

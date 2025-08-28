@@ -14,6 +14,7 @@ Abstract:
 
 use crate::config;
 use crate::utility::PathBufExt;
+use log::{debug, info};
 use p384::ecdsa::Signature;
 use std::mem::size_of;
 use std::path::{Path, PathBuf};
@@ -157,6 +158,7 @@ impl AspeedAuthorizationManifest {
 
     pub(crate) fn modify_vnd_ecc_sig(&mut self, cfg: &config::AspeedAuthManifestConfigFromFile) {
         if cfg.manifest_config.vnd_ecc_sig.is_empty() {
+            info!("No need to modify vendor ECC signature.");
             return;
         }
 
@@ -176,12 +178,14 @@ impl AspeedAuthorizationManifest {
             })
             .collect::<Vec<u8>>();
 
+        debug!("Signature ECC: {:02x?}", sig_raw);
         self.preamble.vnd_manifest_ecc_pubk = [0; ECC384_PUBK_SIZE];
         self.preamble.vnd_manifest_ecc_sig = sig_raw.try_into().expect("Signature size mismatch");
     }
 
     pub(crate) fn modify_vnd_lms_sig(&mut self, cfg: &config::AspeedAuthManifestConfigFromFile) {
         if cfg.manifest_config.vnd_lms_sig.is_empty() {
+            info!("No need to modify vendor LMS signature.");
             return;
         }
 
@@ -192,6 +196,7 @@ impl AspeedAuthorizationManifest {
 
         let sig_raw = std::fs::read(prebuilt_sig).expect("Failed to read the prebuilt signature");
 
+        debug!("Signature LMS: {:02x?}", sig_raw);
         self.preamble.vnd_manifest_lms_pubk = [0; LMS_PUBK_SIZE];
         self.preamble.vnd_manifest_lms_sig = sig_raw.try_into().expect("Signature size mismatch");
     }

@@ -16,6 +16,7 @@ use anyhow::Context;
 use clap::{arg, value_parser, ArgMatches, Command};
 use std::path::PathBuf;
 use utility::PathBufExt;
+use log::debug;
 
 mod config;
 mod soc_man;
@@ -54,6 +55,9 @@ fn main() {
             ),
     ];
 
+    /* Init environment logger */
+    env_logger::init();
+
     let cmd: ArgMatches = Command::new("cptra-imgtool")
         .arg_required_else_help(true)
         .subcommands(sub_cmds)
@@ -72,6 +76,7 @@ fn main() {
 pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let path = config::AspeedManifestCreationPath::new_manifest(args)
         .with_context(|| "Failed to create manifest creation path")?;
+    debug!("Manifest auth path:\n{:#?}", path);
 
     /* Create caliptra manifest config according to aspeed manifest config */
     let cfg = config::AspeedAuthManifestConfigFromFile::new(&path)?;
@@ -112,6 +117,7 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
 pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let path = config::AspeedManifestCreationPath::new_flash(args)
         .with_context(|| "Failed to create manifest creation path")?;
+    debug!("Flash auth path:\n{:#?}", path);
 
     /* If the user didn't specify the prebuild manifest, create it. */
     if !args.contains_id("man") {
@@ -130,6 +136,7 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
                 .filter(|&filename| filename != cfg.image_runtime_list.mcu_file),
         )
         .collect::<Vec<_>>();
+    debug!("Caliptra flash image tool args: {:#?}", bl_list_args);
 
     let cmd = path.tool_dir.join("xtask");
     let mut child = std::process::Command::new(cmd)
