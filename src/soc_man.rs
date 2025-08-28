@@ -178,7 +178,7 @@ impl AspeedAuthorizationManifest {
             })
             .collect::<Vec<u8>>();
 
-        debug!("Signature ECC: {:02x?}", sig_raw);
+        debug!("Prebuilt signature ECC: {:02x?}", sig_raw);
         self.preamble.vnd_manifest_ecc_pubk = [0; ECC384_PUBK_SIZE];
         self.preamble.vnd_manifest_ecc_sig = sig_raw.try_into().expect("Signature size mismatch");
     }
@@ -196,7 +196,7 @@ impl AspeedAuthorizationManifest {
 
         let sig_raw = std::fs::read(prebuilt_sig).expect("Failed to read the prebuilt signature");
 
-        debug!("Signature LMS: {:02x?}", sig_raw);
+        debug!("Prebuilt signature LMS: {:02x?}", sig_raw);
         self.preamble.vnd_manifest_lms_pubk = [0; LMS_PUBK_SIZE];
         self.preamble.vnd_manifest_lms_sig = sig_raw.try_into().expect("Signature size mismatch");
     }
@@ -206,7 +206,6 @@ impl AspeedAuthorizationManifest {
         path: &config::AspeedManifestCreationPath,
         cfg: &config::AspeedAuthManifestConfigFromFile,
     ) {
-        let svn_sig_file = PathBuf::from(format!("out/svn_sig.bin"));
         let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
         let mut child = std::process::Command::new(cmd)
             .args([
@@ -222,7 +221,7 @@ impl AspeedAuthorizationManifest {
                 "--config",
                 &path.caliptra_cfg.to_string(),
                 "--out",
-                &svn_sig_file.to_string(),
+                &path.svn_sig.to_string(),
             ])
             .spawn()
             .expect("Failed to execute command");
@@ -230,10 +229,12 @@ impl AspeedAuthorizationManifest {
         /* Wait for the process to exit */
         let _ = child.wait().expect("Failed to wait on child");
 
-        let sig = std::fs::read(svn_sig_file).expect("Failed to read svn signature file");
+        let sig = std::fs::read(path.svn_sig.unwrap_or_err()).expect("Failed to read svn signature file");
         let ecc_sig: [u8; ECC384_SIG_SIZE] = from_img(&sig, 0);
         let lms_sig: [u8; LMS_SIG_SIZE] = from_img(&sig, ECC384_SIG_SIZE);
 
+        debug!("Security Version ECC Signature: {:02x?}", ecc_sig);
+        debug!("Security Version LMS Signature: {:02x?}", lms_sig);
         self.preamble.sec_ver = cfg.manifest_config.security_version;
         self.preamble.owner_manifest_svn_ecc_sig = ecc_sig;
         self.preamble.owner_manifest_svn_lms_sig = lms_sig;

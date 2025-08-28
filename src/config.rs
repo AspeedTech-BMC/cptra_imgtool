@@ -237,6 +237,8 @@ pub(crate) struct AspeedManifestCreationPath {
     pub manifest: Option<PathBuf>,
 
     pub flash_image: Option<PathBuf>,
+
+    pub svn_sig: Option<PathBuf>,
 }
 
 impl AspeedManifestCreationPath {
@@ -254,6 +256,10 @@ impl AspeedManifestCreationPath {
 
     fn get_caliptra_cfg_path() -> PathBuf {
         PathBuf::from("config/caliptra-manifest.toml")
+    }
+
+    fn get_svn_sig_path() -> PathBuf {
+        PathBuf::from("out/svn_sig.bin")
     }
 
     fn get_manifest_path(args: &ArgMatches, prj: &String) -> PathBuf {
@@ -310,6 +316,7 @@ impl AspeedManifestCreationPath {
             caliptra_cfg: Some(Self::get_caliptra_cfg_path()),
             manifest: Some(Self::get_manifest_path(args, prj)),
             flash_image: None,
+            svn_sig: Some(Self::get_svn_sig_path()),
         })
     }
 
@@ -326,6 +333,7 @@ impl AspeedManifestCreationPath {
             caliptra_cfg: None,
             manifest: Some(Self::get_manifest_path(args, prj)),
             flash_image: Some(Self::get_flash_image_path(args, prj)),
+            svn_sig: None,
         })
     }
 
