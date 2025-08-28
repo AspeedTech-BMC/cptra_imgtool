@@ -1,5 +1,5 @@
 [package]
-name = "caliptra-auth-tool"
+name = "cptra_imgtool"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,3 +13,4 @@ sha2 = "0.10.9"
 hex = "0.4.3"
 toml = "0.7.0"
 zerocopy = { version = "0.8.8", features = ["derive"] }
+

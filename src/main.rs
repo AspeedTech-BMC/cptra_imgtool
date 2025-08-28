@@ -54,7 +54,7 @@ fn main() {
             ),
     ];
 
-    let cmd: ArgMatches = Command::new("aspeed-auth-man-app")
+    let cmd: ArgMatches = Command::new("cptra_imgtool")
         .arg_required_else_help(true)
         .subcommands(sub_cmds)
         .about("Aspeed authorization manifest tools")
