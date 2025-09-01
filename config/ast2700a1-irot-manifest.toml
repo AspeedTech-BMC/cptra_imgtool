@@ -40,81 +40,95 @@ file = "mcu_dummy.bin"
 source = 1
 fw_id = 1
 ignore_auth_check = false
+load_stage = 0
 
 [[image_metadata_list]]
 file = "ddr4_pmu_train_imem.bin"
 source = 1
 fw_id = 2
 ignore_auth_check = false
+load_stage = 0
 
 [[image_metadata_list]]
 file = "ddr4_pmu_train_dmem.bin"
 source = 1
 fw_id = 3
 ignore_auth_check = false
+load_stage = 0
 
 [[image_metadata_list]]
 file = "ddr4_2d_pmu_train_imem.bin"
 source = 1
 fw_id = 4
 ignore_auth_check = false
+load_stage = 0
 
 [[image_metadata_list]]
 file = "ddr4_2d_pmu_train_dmem.bin"
 source = 1
 fw_id = 5
 ignore_auth_check = false
+load_stage = 0
 
 [[image_metadata_list]]
 file = "ddr5_pmu_train_imem.bin"
 source = 1
 fw_id = 6
 ignore_auth_check = false
+load_stage = 0
 
 [[image_metadata_list]]
 file = "ddr5_pmu_train_dmem.bin"
 source = 1
 fw_id = 7
 ignore_auth_check = false
+load_stage = 0
 
 [[image_metadata_list]]
 file = "dp_fw.bin"
 source = 1
 fw_id = 8
 ignore_auth_check = false
+load_stage = 0
 
 [[image_metadata_list]]
 file = "uefi_ast2700.bin"
 source = 1
 fw_id = 9
 ignore_auth_check = false
+load_stage = 0
 
 [[image_metadata_list]]
 file = "dummy.bin"
 source = 1
 fw_id = 10
 ignore_auth_check = false
+load_stage = 2
 
 [[image_metadata_list]]
 file = "dummy.bin"
 source = 1
 fw_id = 11
 ignore_auth_check = false
+load_stage = 2
 
 [[image_metadata_list]]
 file = "dummy.bin"
 source = 1
 fw_id = 12
 ignore_auth_check = false
+load_stage = 2
 
 [[image_metadata_list]]
 file = "ssp.bin"
 source = 1
 fw_id = 13
 ignore_auth_check = false
+load_stage = 1
 
 [[image_metadata_list]]
 file = "tsp.bin"
 source = 1
 fw_id = 14
 ignore_auth_check = false
+load_stage = 0

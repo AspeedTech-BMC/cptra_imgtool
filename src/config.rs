@@ -44,6 +44,8 @@ pub(crate) struct ImageMetadataConfigFromFile {
     pub fw_id: u32,
 
     pub ignore_auth_check: bool,
+
+    pub load_stage: u32,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
@@ -96,6 +98,8 @@ pub(crate) struct AspeedImageMetadataConfigFromFile {
     pub fw_id: u32,
 
     pub ignore_auth_check: bool,
+
+    pub load_stage: u32,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
@@ -203,6 +207,7 @@ impl AspeedAuthManifestConfigFromFile {
                     source: img.source,
                     fw_id: img.fw_id,
                     ignore_auth_check: img.ignore_auth_check,
+                    load_stage: img.load_stage,
                 }
             })
             .collect();
