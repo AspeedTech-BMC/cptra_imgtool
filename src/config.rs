@@ -336,12 +336,4 @@ impl AspeedManifestCreationPath {
             svn_sig: None,
         })
     }
-
-    pub(crate) fn manifest_exists(&self, args: &ArgMatches) -> bool {
-        args.get_one::<String>("prj").map_or(false, |prj| {
-            // perform check with `prj`
-            let manifest = Self::get_manifest_path(args, prj);
-            manifest.exists() && manifest.is_file()
-        })
-    }
 }
