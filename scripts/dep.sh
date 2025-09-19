@@ -31,8 +31,7 @@ fi
 if [ ! -d $CPTRA_MCU_SW_DIR ]; then
     cptra_printf "Cloning caliptra-mcu-sw repository..."
     git clone ssh://gerrit.aspeed.com:29418/caliptra-mcu-sw $CPTRA_MCU_SW_DIR
-    cd $CPTRA_MCU_SW_DIR && git checkout develop
-    sed -i 's/^const MCU_RT_IDENTIFIER: u32 = 0x00000002;/const MCU_RT_IDENTIFIER: u32 = 0x00000003;/' $CPTRA_MCU_SW_DIR/builder/src/flash_image.rs
+    cd $CPTRA_MCU_SW_DIR && git checkout aspeed-dev-ast2700a2
 else
     cptra_printf "Caliptra-mcu-sw repository already exists."
 fi
