@@ -14,9 +14,9 @@ Abstract:
 
 use anyhow::Context;
 use clap::{arg, value_parser, ArgMatches, Command};
+use log::debug;
 use std::path::PathBuf;
 use utility::PathBufExt;
-use log::debug;
 
 mod config;
 mod soc_man;
@@ -35,6 +35,11 @@ fn main() {
                 arg!(--"man" <FILE> "Output manifest file")
                     .required(false)
                     .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"alg" <String> "algorithm")
+                    .required(false)
+                    .value_parser(value_parser!(String)),
             ),
         Command::new("create-auth-flash")
             .about("Create a new authorization flash image")
@@ -52,6 +57,11 @@ fn main() {
                 arg!(--"flash" <FILE> "Output flash file")
                     .required(false)
                     .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"alg" <String> "algorithm")
+                    .required(false)
+                    .value_parser(value_parser!(String)),
             ),
     ];
 
@@ -86,7 +96,7 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
     let mut child = std::process::Command::new(cmd)
         .args([
-            "create-auth-man",
+            "create-aspeed-auth-man",
             "--version",
             &cfg.manifest_config.version.to_string(),
             "--flags",

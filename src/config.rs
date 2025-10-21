@@ -12,6 +12,7 @@ Abstract:
 
 --*/
 
+use anyhow::anyhow;
 use anyhow::Context;
 use clap::ArgMatches;
 use hex;
@@ -26,11 +27,11 @@ use crate::utility::PathBufExt;
 /*  Caliptra defined configuration toml file  */
 #[derive(Default, Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct AuthManifestKeyConfigFromFile {
-    pub ecc_pub_key: String,
+    pub ecc_pub_key: Option<String>,
 
     pub ecc_priv_key: Option<String>,
 
-    pub lms_pub_key: String,
+    pub lms_pub_key: Option<String>,
 
     pub lms_priv_key: Option<String>,
 }
@@ -255,8 +256,12 @@ impl AspeedManifestCreationPath {
         PathBuf::from(format!("key/{}/", prj))
     }
 
-    fn get_aspeed_cfg_path(prj: &String) -> PathBuf {
-        PathBuf::from(format!("config/{}-manifest.toml", prj))
+    fn get_aspeed_cfg_path(prj: &String, alg: &String) -> PathBuf {
+        if alg.is_empty() {
+            PathBuf::from(format!("config/{}-manifest.toml", prj))
+        } else {
+            PathBuf::from(format!("config/{}-{}-manifest.toml", prj, alg))
+        }
     }
 
     fn get_caliptra_cfg_path() -> PathBuf {
@@ -313,11 +318,23 @@ impl AspeedManifestCreationPath {
             .get_one::<String>("prj")
             .with_context(|| "prj arg not specified")?;
 
+        let alg: String = args
+            .get_one::<String>("alg")
+            .map(|s| s.clone())
+            .unwrap_or_else(|| "".to_string());
+
+        if !alg.is_empty() && alg != "ecc" && alg != "ecc-lms" {
+            return Err(anyhow!(
+                "invalid algorithm '{}'; must be 'ecc' or 'ecc-lms'",
+                alg
+            ));
+        }
+
         Ok(AspeedManifestCreationPath {
             prebuilt_dir: Self::get_prebuilt_dir_path(prj),
             tool_dir: Self::get_tool_path(),
             key_dir: Some(Self::get_key_dir_path(prj)),
-            aspeed_cfg: Self::get_aspeed_cfg_path(prj),
+            aspeed_cfg: Self::get_aspeed_cfg_path(prj, &alg),
             caliptra_cfg: Some(Self::get_caliptra_cfg_path()),
             manifest: Some(Self::get_manifest_path(args, prj)),
             flash_image: None,
@@ -330,11 +347,23 @@ impl AspeedManifestCreationPath {
             .get_one::<String>("prj")
             .with_context(|| "prj arg not specified")?;
 
+        let alg: String = args
+            .get_one::<String>("alg")
+            .map(|s| s.clone())
+            .unwrap_or_else(|| "".to_string());
+
+        if !alg.is_empty() && alg != "ecc" && alg != "ecc-lms" {
+            return Err(anyhow!(
+                "invalid algorithm '{}'; must be 'ecc' or 'ecc-lms'",
+                alg
+            ));
+        }
+
         Ok(AspeedManifestCreationPath {
             prebuilt_dir: Self::get_prebuilt_dir_path(prj),
             tool_dir: Self::get_tool_path(),
             key_dir: None,
-            aspeed_cfg: Self::get_aspeed_cfg_path(prj),
+            aspeed_cfg: Self::get_aspeed_cfg_path(prj, &alg),
             caliptra_cfg: None,
             manifest: Some(Self::get_manifest_path(args, prj)),
             flash_image: Some(Self::get_flash_image_path(args, prj)),

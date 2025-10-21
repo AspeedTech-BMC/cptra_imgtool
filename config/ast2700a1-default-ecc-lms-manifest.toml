@@ -4,32 +4,32 @@
 version = 1
 flags = 0
 security_version = 1
-vnd_ecc_sig = ""
-vnd_lms_sig = ""
+vnd_ecc_sig = "vnd_ecc_sig.der"
+vnd_lms_sig = "vnd_lms_sig.der"
 
 [vendor_fw_key_config]
-# ecc_pub_key = "vnd-fw-ecc-pubk.pem"
-# ecc_priv_key = "vnd-fw-ecc-prvk.pem"
-# lms_pub_key = "vnd-fw-lms-pubk.pem"
-# lms_priv_key = "vnd-fw-lms-prvk.pem"
+ecc_pub_key = "vnd-fw-ecc-pubk.pem"
+ecc_priv_key = "vnd-fw-ecc-prvk.pem"
+lms_pub_key = "vnd-fw-lms-pubk.pem"
+lms_priv_key = "vnd-fw-lms-prvk.pem"
 
 [vendor_man_key_config]
-# ecc_pub_key = "vnd-man-ecc-pubk.pem"
-# ecc_priv_key = "vnd-man-ecc-prvk.pem"
-# lms_pub_key = "vnd-man-lms-pubk.pem"
-# lms_priv_key = "vnd-man-lms-prvk.pem"
+ecc_pub_key = "vnd-man-ecc-pubk.pem"
+ecc_priv_key = "vnd-man-ecc-prvk.pem"
+lms_pub_key = "vnd-man-lms-pubk.pem"
+lms_priv_key = "vnd-man-lms-prvk.pem"
 
 [owner_fw_key_config]
-# ecc_pub_key = "own-fw-ecc-pubk.pem"
-# ecc_priv_key = "own-fw-ecc-prvk.pem"
-# lms_pub_key = "own-fw-lms-pubk.pem"
-# lms_priv_key = "own-fw-lms-prvk.pem"
+ecc_pub_key = "own-fw-ecc-pubk.pem"
+ecc_priv_key = "own-fw-ecc-prvk.pem"
+lms_pub_key = "own-fw-lms-pubk.pem"
+lms_priv_key = "own-fw-lms-prvk.pem"
 
 [owner_man_key_config]
-# ecc_pub_key = "own-man-ecc-pubk.pem"
-# ecc_priv_key = "own-man-ecc-prvk.pem"
-# lms_pub_key = "own-man-lms-pubk.pem"
-# lms_priv_key = "own-man-lms-prvk.pem"
+ecc_pub_key = "own-man-ecc-pubk.pem"
+ecc_priv_key = "own-man-ecc-prvk.pem"
+lms_pub_key = "own-man-lms-pubk.pem"
+lms_priv_key = "own-man-lms-prvk.pem"
 
 [image_runtime_list]
 caliptra_file = "caliptra-fw.bin"

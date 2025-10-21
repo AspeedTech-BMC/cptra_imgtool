@@ -4,39 +4,39 @@
 version = 1
 flags = 0
 security_version = 1
-vnd_ecc_sig = ""
+vnd_ecc_sig = "vnd_ecc_sig.der"
 vnd_lms_sig = ""
 
 [vendor_fw_key_config]
-# ecc_pub_key = "vnd-fw-ecc-pubk.pem"
-# ecc_priv_key = "vnd-fw-ecc-prvk.pem"
+ecc_pub_key = "vnd-fw-ecc-pubk.pem"
+ecc_priv_key = "vnd-fw-ecc-prvk.pem"
 # lms_pub_key = "vnd-fw-lms-pubk.pem"
 # lms_priv_key = "vnd-fw-lms-prvk.pem"
 
 [vendor_man_key_config]
-# ecc_pub_key = "vnd-man-ecc-pubk.pem"
-# ecc_priv_key = "vnd-man-ecc-prvk.pem"
+ecc_pub_key = "vnd-man-ecc-pubk.pem"
+ecc_priv_key = "vnd-man-ecc-prvk.pem"
 # lms_pub_key = "vnd-man-lms-pubk.pem"
 # lms_priv_key = "vnd-man-lms-prvk.pem"
 
 [owner_fw_key_config]
-# ecc_pub_key = "own-fw-ecc-pubk.pem"
-# ecc_priv_key = "own-fw-ecc-prvk.pem"
+ecc_pub_key = "own-fw-ecc-pubk.pem"
+ecc_priv_key = "own-fw-ecc-prvk.pem"
 # lms_pub_key = "own-fw-lms-pubk.pem"
 # lms_priv_key = "own-fw-lms-prvk.pem"
 
 [owner_man_key_config]
-# ecc_pub_key = "own-man-ecc-pubk.pem"
-# ecc_priv_key = "own-man-ecc-prvk.pem"
+ecc_pub_key = "own-man-ecc-pubk.pem"
+ecc_priv_key = "own-man-ecc-prvk.pem"
 # lms_pub_key = "own-man-lms-pubk.pem"
 # lms_priv_key = "own-man-lms-prvk.pem"
 
 [image_runtime_list]
-caliptra_file = "caliptra-fw.bin"
-mcu_file = "u-boot-spl.bin"
+caliptra_file = "dummy.bin"
+mcu_file = "mcu_dummy.bin"
 
 [[image_metadata_list]]
-file = "u-boot-spl.bin"
+file = "mcu_dummy.bin"
 source = 1
 fw_id = 1
 ignore_auth_check = false
@@ -99,25 +99,25 @@ ignore_auth_check = false
 load_stage = 0
 
 [[image_metadata_list]]
-file = "atf.bin"
+file = "dummy.bin"
 source = 1
 fw_id = 10
 ignore_auth_check = false
-load_stage = 1
+load_stage = 2
 
 [[image_metadata_list]]
-file = "optee.bin"
+file = "dummy.bin"
 source = 1
 fw_id = 11
 ignore_auth_check = false
-load_stage = 1
+load_stage = 2
 
 [[image_metadata_list]]
-file = "u-boot.bin"
+file = "dummy.bin"
 source = 1
 fw_id = 12
 ignore_auth_check = false
-load_stage = 1
+load_stage = 2
 
 [[image_metadata_list]]
 file = "ssp.bin"
@@ -131,4 +131,4 @@ file = "tsp.bin"
 source = 1
 fw_id = 14
 ignore_auth_check = false
-load_stage = 1
+load_stage = 0
