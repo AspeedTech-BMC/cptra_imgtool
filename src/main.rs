@@ -27,7 +27,7 @@ fn main() {
         Command::new("create-auth-man")
             .about("Create a new authorization manifest")
             .arg(
-                arg!(--"prj" <String> "project name")
+                arg!(--"cfg" <String> "config name")
                     .required(true)
                     .value_parser(value_parser!(String)),
             )
@@ -35,16 +35,11 @@ fn main() {
                 arg!(--"man" <FILE> "Output manifest file")
                     .required(false)
                     .value_parser(value_parser!(PathBuf)),
-            )
-            .arg(
-                arg!(--"alg" <String> "algorithm")
-                    .required(false)
-                    .value_parser(value_parser!(String)),
             ),
         Command::new("create-auth-flash")
             .about("Create a new authorization flash image")
             .arg(
-                arg!(--"prj" <String> "project name")
+                arg!(--"cfg" <String> "config name")
                     .required(true)
                     .value_parser(value_parser!(String)),
             )
@@ -57,11 +52,6 @@ fn main() {
                 arg!(--"flash" <FILE> "Output flash file")
                     .required(false)
                     .value_parser(value_parser!(PathBuf)),
-            )
-            .arg(
-                arg!(--"alg" <String> "algorithm")
-                    .required(false)
-                    .value_parser(value_parser!(String)),
             ),
     ];
 

@@ -6,6 +6,9 @@ flags = 0
 security_version = 1
 vnd_ecc_sig = "vnd_ecc_sig.der"
 vnd_lms_sig = ""
+prj_name = "ast2700a1-default"
+key_dir = "key/ast2700a1-default/"
+prebuilt_dir = "prebuilt/ast2700a1-default/"
 
 [vendor_fw_key_config]
 ecc_pub_key = "vnd-fw-ecc-pubk.pem"

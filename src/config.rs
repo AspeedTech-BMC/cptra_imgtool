@@ -19,8 +19,10 @@ use hex;
 use serde_derive::{Deserialize, Serialize};
 use sha2::{Digest, Sha384};
 use std::env;
+use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
+use toml::Value;
 
 use crate::utility::PathBufExt;
 
@@ -248,20 +250,44 @@ pub(crate) struct AspeedManifestCreationPath {
 }
 
 impl AspeedManifestCreationPath {
-    fn get_prebuilt_dir_path(prj: &String) -> PathBuf {
-        PathBuf::from(format!("prebuilt/{}/", prj))
+    fn get_config_value(aspeed_cfg: &PathBuf) -> anyhow::Result<Value> {
+        let content = fs::read_to_string(aspeed_cfg)
+            .map_err(|e| anyhow::anyhow!("Failed to read file: {}", e))?;
+
+        let value: Value =
+            toml::from_str(&content).map_err(|e| anyhow::anyhow!("Failed to parse TOML: {}", e))?;
+
+        Ok(value)
     }
 
-    fn get_key_dir_path(prj: &String) -> PathBuf {
-        PathBuf::from(format!("key/{}/", prj))
+    fn get_prebuilt_dir_path(aspeed_cfg: &PathBuf) -> anyhow::Result<PathBuf> {
+        let value = Self::get_config_value(aspeed_cfg)?;
+        let prebuilt_dir = value
+            .get("manifest_config")
+            .ok_or_else(|| anyhow!("Missing [manifest_config] section"))?
+            .get("prebuilt_dir")
+            .ok_or_else(|| anyhow!("Missing field: manifest_config.prebuilt_dir"))?
+            .as_str()
+            .ok_or_else(|| anyhow!("Field manifest_config.prebuilt_dir must be a string"))?;
+
+        Ok(PathBuf::from(prebuilt_dir.to_string()))
     }
 
-    fn get_aspeed_cfg_path(prj: &String, alg: &String) -> PathBuf {
-        if alg.is_empty() {
-            PathBuf::from(format!("config/{}-manifest.toml", prj))
-        } else {
-            PathBuf::from(format!("config/{}-{}-manifest.toml", prj, alg))
-        }
+    fn get_key_dir_path(aspeed_cfg: &PathBuf) -> anyhow::Result<PathBuf> {
+        let value = Self::get_config_value(aspeed_cfg)?;
+        let key_dir = value
+            .get("manifest_config")
+            .ok_or_else(|| anyhow!("Missing [manifest_config] section"))?
+            .get("key_dir")
+            .ok_or_else(|| anyhow!("Missing field: manifest_config.key_dir"))?
+            .as_str()
+            .ok_or_else(|| anyhow!("Field manifest_config.key_dir must be a string"))?;
+
+        Ok(PathBuf::from(key_dir.to_string()))
+    }
+
+    fn get_aspeed_cfg_path(config: &String) -> PathBuf {
+        PathBuf::from(format!("config/{}-manifest.toml", config))
     }
 
     fn get_caliptra_cfg_path() -> PathBuf {
@@ -313,60 +339,55 @@ impl AspeedManifestCreationPath {
         cur_exe
     }
 
+    fn get_project_name(aspeed_cfg: &PathBuf) -> anyhow::Result<String> {
+        let value = Self::get_config_value(aspeed_cfg)?;
+        let project_name = value
+            .get("manifest_config")
+            .ok_or_else(|| anyhow!("Missing [manifest_config] section"))?
+            .get("prj_name")
+            .ok_or_else(|| anyhow!("Missing field: manifest_config.prj_name"))?
+            .as_str()
+            .ok_or_else(|| anyhow!("Field manifest_config.prj_name must be a string"))?;
+
+        Ok(project_name.to_string())
+    }
+
     pub(crate) fn new_manifest(args: &ArgMatches) -> anyhow::Result<AspeedManifestCreationPath> {
-        let prj: &String = args
-            .get_one::<String>("prj")
-            .with_context(|| "prj arg not specified")?;
+        let config: &String = args
+            .get_one::<String>("cfg")
+            .with_context(|| "cfg arg not specified")?;
 
-        let alg: String = args
-            .get_one::<String>("alg")
-            .map(|s| s.clone())
-            .unwrap_or_else(|| "".to_string());
-
-        if !alg.is_empty() && alg != "ecc" && alg != "ecc-lms" {
-            return Err(anyhow!(
-                "invalid algorithm '{}'; must be 'ecc' or 'ecc-lms'",
-                alg
-            ));
-        }
+        let aspeed_cfg = Self::get_aspeed_cfg_path(config);
+        let prj = Self::get_project_name(&aspeed_cfg)?;
 
         Ok(AspeedManifestCreationPath {
-            prebuilt_dir: Self::get_prebuilt_dir_path(prj),
+            prebuilt_dir: Self::get_prebuilt_dir_path(&aspeed_cfg)?,
             tool_dir: Self::get_tool_path(),
-            key_dir: Some(Self::get_key_dir_path(prj)),
-            aspeed_cfg: Self::get_aspeed_cfg_path(prj, &alg),
+            key_dir: Some(Self::get_key_dir_path(&aspeed_cfg)?),
+            aspeed_cfg,
             caliptra_cfg: Some(Self::get_caliptra_cfg_path()),
-            manifest: Some(Self::get_manifest_path(args, prj)),
+            manifest: Some(Self::get_manifest_path(args, &prj)),
             flash_image: None,
             svn_sig: Some(Self::get_svn_sig_path()),
         })
     }
 
     pub(crate) fn new_flash(args: &ArgMatches) -> anyhow::Result<AspeedManifestCreationPath> {
-        let prj: &String = args
-            .get_one::<String>("prj")
-            .with_context(|| "prj arg not specified")?;
+        let config: &String = args
+            .get_one::<String>("cfg")
+            .with_context(|| "cfg arg not specified")?;
 
-        let alg: String = args
-            .get_one::<String>("alg")
-            .map(|s| s.clone())
-            .unwrap_or_else(|| "".to_string());
-
-        if !alg.is_empty() && alg != "ecc" && alg != "ecc-lms" {
-            return Err(anyhow!(
-                "invalid algorithm '{}'; must be 'ecc' or 'ecc-lms'",
-                alg
-            ));
-        }
+        let aspeed_cfg = Self::get_aspeed_cfg_path(config);
+        let prj = Self::get_project_name(&aspeed_cfg)?;
 
         Ok(AspeedManifestCreationPath {
-            prebuilt_dir: Self::get_prebuilt_dir_path(prj),
+            prebuilt_dir: Self::get_prebuilt_dir_path(&aspeed_cfg)?,
             tool_dir: Self::get_tool_path(),
             key_dir: None,
-            aspeed_cfg: Self::get_aspeed_cfg_path(prj, &alg),
+            aspeed_cfg,
             caliptra_cfg: None,
-            manifest: Some(Self::get_manifest_path(args, prj)),
-            flash_image: Some(Self::get_flash_image_path(args, prj)),
+            manifest: Some(Self::get_manifest_path(args, &prj)),
+            flash_image: Some(Self::get_flash_image_path(args, &prj)),
             svn_sig: None,
         })
     }
