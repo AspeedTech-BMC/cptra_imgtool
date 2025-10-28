@@ -25,6 +25,9 @@ if [ ! -d $CPTRA_SW_DIR ]; then
     git submodule update dpe
 else
     cptra_printf "Caliptra-sw repository already exists."
+    cptra_printf "Update to lastest version on aspeed-rt-1.2.0 branch."
+    cd $CPTRA_SW_DIR
+    git pull --rebase
 fi
 
 # Get caliptra-mcu-sw repository
