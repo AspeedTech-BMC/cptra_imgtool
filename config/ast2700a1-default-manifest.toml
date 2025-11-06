@@ -4,11 +4,7 @@
 version = 1
 flags = 0
 security_version = 1
-vnd_ecc_sig = ""
-vnd_lms_sig = ""
 prj_name = "ast2700a1-default"
-key_dir = "key/ast2700a1-default/"
-prebuilt_dir = "prebuilt/ast2700a1-default/"
 
 [vendor_fw_key_config]
 # ecc_pub_key = "vnd-fw-ecc-pubk.pem"
@@ -35,11 +31,11 @@ prebuilt_dir = "prebuilt/ast2700a1-default/"
 # lms_priv_key = "own-man-lms-prvk.pem"
 
 [image_runtime_list]
-caliptra_file = "caliptra-fw.bin"
-mcu_file = "u-boot-spl.bin"
+caliptra_file = ""
+mcu_file = ""
 
 [[image_metadata_list]]
-file = "u-boot-spl.bin"
+file = ""
 source = 1
 fw_id = 1
 ignore_auth_check = false

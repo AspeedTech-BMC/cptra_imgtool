@@ -27,7 +27,7 @@ fn main() {
         Command::new("create-auth-man")
             .about("Create a new authorization manifest")
             .arg(
-                arg!(--"cfg" <String> "config name")
+                arg!(--"cfg" <String> "config path")
                     .required(true)
                     .value_parser(value_parser!(String)),
             )
@@ -35,11 +35,21 @@ fn main() {
                 arg!(--"man" <FILE> "Output manifest file")
                     .required(false)
                     .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"key-dir" <String> "key directory")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"prebuilt-dir" <String> "prebuilt directory")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
             ),
         Command::new("create-auth-flash")
             .about("Create a new authorization flash image")
             .arg(
-                arg!(--"cfg" <String> "config name")
+                arg!(--"cfg" <String> "config path")
                     .required(true)
                     .value_parser(value_parser!(String)),
             )
@@ -50,6 +60,16 @@ fn main() {
             )
             .arg(
                 arg!(--"flash" <FILE> "Output flash file")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"key-dir" <String> "key directory")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"prebuilt-dir" <String> "prebuilt directory")
                     .required(false)
                     .value_parser(value_parser!(PathBuf)),
             ),
@@ -70,13 +90,48 @@ fn main() {
         (_, _) => unreachable!(),
     };
 
+    config::remove_tmp_folder().unwrap();
     result.unwrap();
+}
+
+pub(crate) fn show_important_cfg_path(cfg: &config::AspeedManifestCreationPath) {
+    println!("-----------------------------------------------------------------------------------------------------------");
+    println!("prebuilt_dir : {}", cfg.prebuilt_dir.display());
+    println!(
+        "key_dir : {}",
+        cfg.key_dir
+            .as_ref()
+            .map(|p| p.display().to_string())
+            .unwrap_or_else(|| "<None>".to_string())
+    );
+    println!(
+        "svn_sig : {}",
+        cfg.svn_sig
+            .as_ref()
+            .map(|p| p.display().to_string())
+            .unwrap_or_else(|| "<None>".to_string())
+    );
+    println!(
+        "manifest : {}",
+        cfg.manifest
+            .as_ref()
+            .map(|p| p.display().to_string())
+            .unwrap_or_else(|| "<None>".to_string())
+    );
+    println!("caliptra_cfg : {}",
+        cfg.caliptra_cfg
+            .as_ref()
+            .map(|p| p.display().to_string())
+            .unwrap_or_else(|| "<None>".to_string())
+    );
+    println!("-----------------------------------------------------------------------------------------------------------");
 }
 
 pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let path = config::AspeedManifestCreationPath::new_manifest(args)
         .with_context(|| "Failed to create manifest creation path")?;
     debug!("Manifest auth path:\n{:#?}", path);
+    show_important_cfg_path(&path);
 
     /* Create caliptra manifest config according to aspeed manifest config */
     let cfg = config::AspeedAuthManifestConfigFromFile::new(&path)?;
@@ -84,6 +139,8 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
 
     /* Run the caliptra manifest tool to create the manifest */
     let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
+    config::check_path_exists(cmd.as_path())?;
+
     let mut child = std::process::Command::new(cmd)
         .args([
             "create-aspeed-auth-man",
@@ -106,8 +163,8 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
 
     /* Post-Processing to meet aspeed proprietary feature */
     let mut soc_man = soc_man::AspeedAuthorizationManifest::new(&path.manifest.unwrap_or_err());
-    soc_man.modify_vnd_ecc_sig(&cfg);
-    soc_man.modify_vnd_lms_sig(&cfg);
+    soc_man.modify_vnd_ecc_sig()?;
+    soc_man.modify_vnd_lms_sig()?;
     soc_man.insert_security_version(&path, &cfg);
     soc_man.close();
 
@@ -127,18 +184,22 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     /* Get the aspeed configuration */
     let cfg = config::AspeedAuthManifestConfigFromFile::new(&path)?;
 
+    /* To meet requirement: add FMC to SoC manifest but not in flash images list */
+    const MCU_RUN_TIME_FW_ID: u32 = 1;
     /* Run the caliptra flash image tool to create the flash image */
     let bl_list_args = std::iter::once("--soc-images")
         .chain(
             cfg.image_metadata_list
                 .iter()
-                .map(|s| s.file.as_str())
-                .filter(|&filename| filename != cfg.image_runtime_list.mcu_file),
+                .filter(|img| img.fw_id != MCU_RUN_TIME_FW_ID)
+                .map(|s| s.file.as_str()),
         )
         .collect::<Vec<_>>();
     debug!("Caliptra flash image tool args: {:#?}", bl_list_args);
 
     let cmd = path.tool_dir.join("xtask");
+    config::check_path_exists(cmd.as_path())?;
+
     let mut child = std::process::Command::new(cmd)
         .args([
             "flash-image",

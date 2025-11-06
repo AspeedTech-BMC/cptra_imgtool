@@ -14,10 +14,11 @@ Abstract:
 
 use crate::config;
 use crate::utility::PathBufExt;
+use anyhow::{anyhow, Result};
 use log::{debug, info};
 use p384::ecdsa::Signature;
 use std::mem::size_of;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 const IMAGE_METADATA_MAX_COUNT: usize = 127;
 const ECC384_SIG_SIZE: usize = 96;
@@ -92,6 +93,11 @@ pub(crate) struct AspeedAuthorizationManifest {
     metadata_col: AspeedAuthManifestImageMetadataCollection,
 }
 
+const VND_ECC_SIG_BIN: &[u8] = include_bytes!("vnd_sig/vnd_ecc_sig.der");
+const VND_LMS_SIG_BIN: &[u8] = include_bytes!("vnd_sig/vnd_lms_sig.der");
+const _: () = assert!(VND_ECC_SIG_BIN.len() == 103, "VND_ECC_SIG_BIN size error!");
+const _: () = assert!(VND_LMS_SIG_BIN.len() == 1620, "VND_LMS_SIG_BIN size error!");
+
 fn from_img<T: Copy>(buf: &[u8], offset: usize) -> T {
     assert!(offset + size_of::<T>() <= buf.len(), "Out of bounds");
     unsafe {
@@ -156,21 +162,20 @@ impl AspeedAuthorizationManifest {
         std::fs::write(self.path.clone(), image).expect("Failed to write SoC manifest file");
     }
 
-    pub(crate) fn modify_vnd_ecc_sig(&mut self, cfg: &config::AspeedAuthManifestConfigFromFile) {
-        if cfg.manifest_config.vnd_ecc_sig.is_empty() {
+    pub(crate) fn modify_vnd_ecc_sig(
+        &mut self,
+    ) -> Result<()> {
+        // Skip modification if not configured
+        if self.preamble.vnd_manifest_ecc_sig == [0u8; ECC384_SIG_SIZE] {
             info!("No need to modify vendor ECC signature.");
-            return;
+            return Ok(());
         }
 
-        let prebuilt_sig = Path::new(&cfg.manifest_config.vnd_ecc_sig);
-        if !prebuilt_sig.exists() || !prebuilt_sig.is_file() {
-            return;
-        }
+        let sig_der = VND_ECC_SIG_BIN.to_vec();
 
-        /* Read signature from der and convery it to hardware endian */
-        let sig_der = std::fs::read(prebuilt_sig).expect("Failed to read the prebuilt signature");
+        // Parse DER and convert to raw little-endian hardware format
         let sig_raw = Signature::from_der(&sig_der)
-            .expect("Failed to parse DER signature")
+            .map_err(|_| anyhow!("Failed to parse DER signature"))?
             .to_vec()
             .chunks_exact(4)
             .flat_map(|chunk| {
@@ -179,26 +184,36 @@ impl AspeedAuthorizationManifest {
             .collect::<Vec<u8>>();
 
         debug!("Prebuilt signature ECC: {:02x?}", sig_raw);
+
+        // Apply to preamble
         self.preamble.vnd_manifest_ecc_pubk = [0; ECC384_PUBK_SIZE];
-        self.preamble.vnd_manifest_ecc_sig = sig_raw.try_into().expect("Signature size mismatch");
+        self.preamble.vnd_manifest_ecc_sig = sig_raw
+            .try_into()
+            .map_err(|_| anyhow!("Signature size mismatch"))?;
+
+        Ok(())
     }
 
-    pub(crate) fn modify_vnd_lms_sig(&mut self, cfg: &config::AspeedAuthManifestConfigFromFile) {
-        if cfg.manifest_config.vnd_lms_sig.is_empty() {
+    pub(crate) fn modify_vnd_lms_sig(
+        &mut self,
+    ) -> Result<()> {
+        // Skip modification if not configured
+        if self.preamble.vnd_manifest_lms_sig == [0u8; LMS_SIG_SIZE] {
             info!("No need to modify vendor LMS signature.");
-            return;
+            return Ok(());
         }
 
-        let prebuilt_sig = Path::new(&cfg.manifest_config.vnd_lms_sig);
-        if !prebuilt_sig.exists() || !prebuilt_sig.is_file() {
-            return;
-        }
-
-        let sig_raw = std::fs::read(prebuilt_sig).expect("Failed to read the prebuilt signature");
+        let sig_raw = VND_LMS_SIG_BIN.to_vec();
 
         debug!("Prebuilt signature LMS: {:02x?}", sig_raw);
+
+        // Apply to preamble
         self.preamble.vnd_manifest_lms_pubk = [0; LMS_PUBK_SIZE];
-        self.preamble.vnd_manifest_lms_sig = sig_raw.try_into().expect("Signature size mismatch");
+        self.preamble.vnd_manifest_lms_sig = sig_raw
+            .try_into()
+            .map_err(|_| anyhow!("Signature size mismatch"))?;
+
+        Ok(())
     }
 
     pub(crate) fn insert_security_version(
@@ -229,7 +244,8 @@ impl AspeedAuthorizationManifest {
         /* Wait for the process to exit */
         let _ = child.wait().expect("Failed to wait on child");
 
-        let sig = std::fs::read(path.svn_sig.unwrap_or_err()).expect("Failed to read svn signature file");
+        let sig =
+            std::fs::read(path.svn_sig.unwrap_or_err()).expect("Failed to read svn signature file");
         let ecc_sig: [u8; ECC384_SIG_SIZE] = from_img(&sig, 0);
         let lms_sig: [u8; LMS_SIG_SIZE] = from_img(&sig, ECC384_SIG_SIZE);
 
