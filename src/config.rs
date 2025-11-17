@@ -163,6 +163,15 @@ pub fn remove_tmp_folder() -> Result<()> {
     Ok(())
 }
 
+impl AuthManifestKeyConfigFromFile {
+    pub fn has_any_key(&self) -> bool {
+        self.ecc_pub_key.is_some()
+            || self.ecc_priv_key.is_some()
+            || self.lms_pub_key.is_some()
+            || self.lms_priv_key.is_some()
+    }
+}
+
 impl AspeedAuthManifestConfigFromFile {
     fn find_prebuilt_img_path(&mut self, path: &AspeedManifestCreationPath) -> Result<()> {
         let dummy_path = GLOBAL_DUMMY_PATH.clone();
@@ -229,6 +238,27 @@ impl AspeedAuthManifestConfigFromFile {
         config.find_prebuilt_img_path(path)?;
 
         Ok(config)
+    }
+
+    pub(crate) fn has_any_key(&self) -> bool {
+        self.vendor_fw_key_config.has_any_key()
+            || self.vendor_man_key_config.has_any_key()
+            || self.owner_fw_key_config.as_ref().map(|c| c.has_any_key()).unwrap_or(false)
+            || self.owner_man_key_config.as_ref().map(|c| c.has_any_key()).unwrap_or(false)
+    }
+
+    pub(crate) fn validate_key_dir_if_needed(
+        &self,
+        key_dir: Option<&Path>,
+    ) -> anyhow::Result<PathBuf> {
+        if self.has_any_key() {
+            let dir = key_dir.ok_or_else(|| anyhow!("Key directory is required when keys are specified"))?;
+            check_path_exists(dir)?;
+            Ok(dir.to_path_buf())
+        } else {
+            let tmp_path = GLOBAL_TMP_DIR.path().to_path_buf();
+            Ok(tmp_path.join(""))
+        }
     }
 
     pub(crate) fn save_caliptra_cfg(&self, path_mngt: &AspeedManifestCreationPath) -> Result<()> {
@@ -315,7 +345,8 @@ impl AspeedManifestCreationPath {
             .get_one::<PathBuf>("key-dir")
             .cloned()
             .unwrap_or_def(PathBuf::from(format!("key/{}/", prj)));
-        check_path_exists(&key_dir)?;
+        // Check later if a key has been assigned
+        // check_path_exists(&key_dir)?;
         Ok(key_dir)
     }
 

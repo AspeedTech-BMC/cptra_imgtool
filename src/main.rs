@@ -137,6 +137,10 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let cfg = config::AspeedAuthManifestConfigFromFile::new(&path)?;
     cfg.save_caliptra_cfg(&path)?;
 
+    /* To satisfy the key-dir validation requirements of caliptra-auth-manifest-app */
+    let key_dir = cfg.validate_key_dir_if_needed(path.key_dir.as_deref())?;
+    debug!("key_dir_to_auth_manifest_tool: {:#?}", key_dir.display());
+
     /* Run the caliptra manifest tool to create the manifest */
     let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
     config::check_path_exists(cmd.as_path())?;
@@ -149,7 +153,7 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
             "--flags",
             &cfg.manifest_config.flags.to_string(),
             "--key-dir",
-            &path.key_dir.to_string(),
+            &key_dir.to_string(),
             "--config",
             &path.caliptra_cfg.to_string(),
             "--out",
@@ -165,7 +169,7 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let mut soc_man = soc_man::AspeedAuthorizationManifest::new(&path.manifest.unwrap_or_err());
     soc_man.modify_vnd_ecc_sig()?;
     soc_man.modify_vnd_lms_sig()?;
-    soc_man.insert_security_version(&path, &cfg);
+    soc_man.insert_security_version(&path, &cfg, &key_dir);
     soc_man.close();
 
     Ok(())

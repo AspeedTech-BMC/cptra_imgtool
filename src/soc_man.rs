@@ -220,6 +220,7 @@ impl AspeedAuthorizationManifest {
         &mut self,
         path: &config::AspeedManifestCreationPath,
         cfg: &config::AspeedAuthManifestConfigFromFile,
+        key_dir: &PathBuf,
     ) {
         let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
         let mut child = std::process::Command::new(cmd)
@@ -232,7 +233,7 @@ impl AspeedAuthorizationManifest {
                 "--flags",
                 &cfg.manifest_config.flags.to_string(),
                 "--key-dir",
-                &path.key_dir.to_string(),
+                &key_dir.to_string(),
                 "--config",
                 &path.caliptra_cfg.to_string(),
                 "--out",
