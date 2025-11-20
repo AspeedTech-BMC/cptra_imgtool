@@ -35,62 +35,73 @@ ASPEED CPTRA image tool is to packages the SoC image into caliptra flash image l
         └── caliptra-mcu-sw
         ``` 
 
-# Build only the Caliptra SoC Manifest
-* Basic command with a specified config path:
-    ``` bash
-    cargo run create-auth-man --cfg config/ast2700-default-manifest.toml
-    # Output: out/ast2700-default-auth-manifest.bin
-    ```
-* Command Options
-  
-    The create-auth-man command supports the following arguments:
+---
 
-    | Argument                  | Required | Description                                                                                    |
-    | ------------------------- | -------- | ---------------------------------------------------------------------------------------------- |
-    | `--cfg <String>`          | Yes      | Path to the configuration file used to generate the manifest.                                  |
-    | `--man <FILE>`            | No       | Output path for the generated manifest file. If not provided, the default output path is used. |
-    | `--key-dir <String>`      | No       | Directory containing the keys needed for manifest generation.                                  |
-    | `--prebuilt-dir <String>` | No       | Directory containing prebuilt binaries required by the manifest.                               |
-* Example with Optional Arguments
-    ``` bash
-    cargo run create-auth-man \
-        --cfg config/ast2700-default-manifest.toml \
-        --man out/soc-manifest.bin \
-        --key-dir keys/ast2700-default/ \
-        --prebuilt-dir prebuilt/ast2700-default/
-    ```
+# Build only the Caliptra SoC Manifest
+### Basic command with a specified config path:
+``` bash
+cargo run create-auth-man --cfg config/ast2700-default-manifest.toml
+# Output: out/ast2700-default-auth-manifest.bin
+```
+
+### Command Options
+  
+The create-auth-man command supports the following arguments:
+
+| Argument                  | Required | Description                                                                                    |
+| ------------------------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `--cfg <String>`          | Yes      | Path to the configuration file used to generate the manifest.                                  |
+| `--man <FILE>`            | No       | Output path for the generated manifest file. If not provided, the default output path is used. |
+| `--key-dir <String>`      | No       | Directory containing the keys needed for manifest generation.                                  |
+| `--prebuilt-dir <String>` | No       | Directory containing prebuilt binaries required by the manifest.                               |
+
+
+Example with Optional Arguments
+``` bash
+cargo run create-auth-man \
+    --cfg config/ast2700-default-manifest.toml \
+    --man out/soc-manifest.bin \
+    --key-dir keys/ast2700-default/ \
+    --prebuilt-dir prebuilt/ast2700-default/
+```
+
+---
 
 # Build the Caliptra Flash Image (including the Caliptra SoC manifest)
-* Basic command with a specified config path:
-    ``` bash
-    cargo run create-auth-flash --cfg config/ast2700-default-manifest.toml
-    # Output: out/ast2700-default-flash-image.bin
-    ```
-* Command Options
+### Basic command with a specified config path:
+``` bash
+cargo run create-auth-flash --cfg config/ast2700-default-manifest.toml
+# Output: out/ast2700-default-flash-image.bin
+```
 
-    The create-auth-flash command supports the following arguments:
-    | Argument                  | Required | Description                                                                                                        |
-    | ------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
-    | `--cfg <String>`          | Yes      | Path to the configuration file used to generate the flash image.                                                   |
-    | `--man <FILE>`            | No       | Input manifest file. If not provided, the tool automatically generates the manifest based on the specified config. |
-    | `--flash <FILE>`          | No       | Output path for the generated flash image file. If not provided, the tool outputs to the default path shown above. |
-    | `--key-dir <String>`      | No       | Directory containing the keys required for building the flash image.                                               |
-    | `--prebuilt-dir <String>` | No       | Directory containing prebuilt binaries used when assembling the flash image.                                       |
+### Command Options
+
+The create-auth-flash command supports the following arguments:
+
+| Argument                  | Required | Description                                                                                                        |
+| ------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| `--cfg <String>`          | Yes      | Path to the configuration file used to generate the flash image.                                                   |
+| `--man <FILE>`            | No       | Input manifest file. If not provided, the tool automatically generates the manifest based on the specified config. |
+| `--flash <FILE>`          | No       | Output path for the generated flash image file. If not provided, the tool outputs to the default path shown above. |
+| `--key-dir <String>`      | No       | Directory containing the keys required for building the flash image.                                               |
+| `--prebuilt-dir <String>` | No       | Directory containing prebuilt binaries used when assembling the flash image.                                       |
 
 
-* Example with Optional Arguments
-    ``` bash
-    cargo run create-auth-flash \
-        --cfg config/ast2700-default-manifest.toml \
-        --man out/ast2700-default-auth-manifest.bin \
-        --flash out/custom-flash-image.bin \
-        --key-dir keys/ast2700-default/ \
-        --prebuilt-dir prebuilt/ast2700-default/
-    ```
+Example with Optional Arguments
+``` bash
+cargo run create-auth-flash \
+    --cfg config/ast2700-default-manifest.toml \
+    --man out/ast2700-default-auth-manifest.bin \
+    --flash out/custom-flash-image.bin \
+    --key-dir keys/ast2700-default/ \
+    --prebuilt-dir prebuilt/ast2700-default/
+```
+
+---
 
 # TOML Configuration Description
 The configuration file defines parameters used during manifest generation and flash image construction.
-## **manifest_config** fields
+### manifest_config fields
 
 
 | Field              | Description                                                                                                                                                                         |
@@ -100,7 +111,7 @@ The configuration file defines parameters used during manifest generation and fl
 | `security_version` | Security version used for **anti-rollback protection**. Higher values represent newer firmware. Devices will reject firmware with a lower `security_version` than the stored value. |
 | `prj_name`         | Optional. If omitted, default directories and filenames are used. If set, it affects the **default key directory**, **prebuilt directory**, and **output binary naming**.           |
 
-## Secure Boot–Related Key Configuration
+### Secure Boot–Related Key Configuration
   
 The following sections determine which keys are used for signing and are directly tied to the platform’s secure boot policy.
 
@@ -111,17 +122,17 @@ The following sections determine which keys are used for signing and are directl
 | `[owner_fw_key_config]`   | Owner firmware signing key settings.  |
 | `[owner_man_key_config]`  | Owner manifest signing key settings.  |
 
-## Runtime Image List
+### Runtime Image List
 | Field           | Description                                                              |
 | --------------- | ------------------------------------------------------------------------ |
 | `caliptra_file` | The Caliptra firmware image. Please specify the final `caliptra-fw.bin`. |
 | `mcu_file`      | The first mutable code executed during boot (e.g., `zephyr-mcu-runtime.bin`).    |
 
-## Image Metadata List
+### Image Metadata List
 
 The `image_metadata_list` defines the metadata entries included in the manifest or flash layout.
 
-### Rules
+#### Rules
 
 1. **The first entry must always describe the FMC (First Mutable Code).**  
    This is essential for establishing the boot chain.
@@ -134,6 +145,7 @@ The `image_metadata_list` defines the metadata entries included in the manifest 
    - optee.bin
    - uboot.bin
 
+---
 
 # Secure Boot Configuration
 When Secure Boot is enabled, the manifest must be generated using the appropriate key configuration.  
@@ -149,6 +161,7 @@ Depending on the signing scheme you intend to use, please refer to the following
 
 Select the configuration that matches your platform's secure boot policy before generating the manifest or flash image.
 
+---
 
 # Customer configuration
 * Update the pre-build images in $MANIFEST_TOOL/prebuilt/$PROJECT/
