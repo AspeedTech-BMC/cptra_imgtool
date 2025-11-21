@@ -1,6 +1,23 @@
 # ASPEED CPTRA_IMGTOOL
 
-ASPEED CPTRA image tool is to packages the SoC image into caliptra flash image layout.  This includes the caliptra-core and caliptra-mcu runtime images, the [Caliptra SoC Manifest](https://github.com/chipsalliance/caliptra-sw/tree/main/auth-manifest), prebuilt binaries and the bootloaders for the AST27xxA2 platform.
+ASPEED CPTRA image tool is to packages the SoC image into caliptra flash image layout. This includes the 
+caliptra-core and caliptra-mcu runtime images, the Caliptra SoC manifest, prebuilt binaries and the 
+bootloaders for the AST27xxA2 platform.
+
+This flash image layout is divided four parts, header, checksum, image infromation, and image binary.
+If you want to know more detail about soc manifest, please refer to [Caliptra SoC Manifest](https://github.com/chipsalliance/caliptra-sw/tree/main/auth-manifest)
+
+## Header
+![alt text](images/image.png)
+
+## Checksum
+![alt text](images/image-1.png)
+
+## Image information
+![alt text](images/image-2.png)
+
+## Image metadata list
+![alt text](images/image-3.png)
 
 # Requirement
 * Rustup for managing rust toolchain
@@ -122,6 +139,18 @@ The following sections determine which keys are used for signing and are directl
 | `[owner_fw_key_config]`   | Owner firmware signing key settings.  |
 | `[owner_man_key_config]`  | Owner manifest signing key settings.  |
 
+The cptra image tool locates keys using the key name defined in this configuration.  
+If you need to use a different key, replace the original key file at the specified location.
+```
+    ├── key
+    │   ├── ast2700-default
+    │   │   ├── own-fw-ecc-prvk.pem
+    │   │   ├── own-fw-ecc-pubk.pem
+    │   │   ├── own-fw-lms-prvk.pem
+    │   │   ├── own-fw-lms-pubk.pem
+                  :
+```
+
 ### Runtime Image List
 | Field           | Description                                                              |
 | --------------- | ------------------------------------------------------------------------ |
@@ -130,7 +159,19 @@ The following sections determine which keys are used for signing and are directl
 
 ### Image Metadata List
 
-The `image_metadata_list` defines the metadata entries included in the manifest or flash layout.
+The `image_metadata_list` defines the metadata entries included in the manifest or flash layout.  
+
+If you want to remove an image from manifest or flash layout, locate its corresponding metadata entriy  
+and set `file = ""` and `load_stage = 0`.
+
+```
+[[image_metadata_list]]
+file = ""
+source = 1
+fw_id = 13
+ignore_auth_check = false
+load_stage = 0
+```
 
 #### Rules
 
@@ -145,11 +186,37 @@ The `image_metadata_list` defines the metadata entries included in the manifest 
    - optee.bin
    - uboot.bin
 
+### Image Update
+If you want to package new firmware using cptra image tool, replace the image and run cptra image tool command.
+
+The image file structure like this:
+```
+├── prebuilt
+│   ├── ast2700-default
+│   │   ├── atf.bin
+│   │   ├── caliptra-fw.bin
+│   │   ├── ddr4_2d_pmu_train_dmem.bin
+│   │   ├── ddr4_2d_pmu_train_imem.bin
+                   :
+```
+
+Example: Update atf.bin
+``` bash
+# Suppose you have built a new atf binary named xxxx_atf.bin
+cp xxxx_atf.bin prebuilt/ast2700-default/atf.bin
+cargo run create-auth-flash \
+    --cfg config/ast2700-default-manifest.toml
+```
+
 ---
 
 # Secure Boot Configuration
 When Secure Boot is enabled, the manifest must be generated using the appropriate key configuration.  
 Depending on the signing scheme you intend to use, please refer to the following predefined configurations:
+
+- **Secure boot disabe**  
+  Use this configuration if the platform disable Secure Boot:  
+  `config/ast2700-default-manifest.toml`
 
 - **ECC Only**  
   Use this configuration if the platform enables Secure Boot with **ECC-only** signing:  
@@ -162,46 +229,3 @@ Depending on the signing scheme you intend to use, please refer to the following
 Select the configuration that matches your platform's secure boot policy before generating the manifest or flash image.
 
 ---
-
-# Customer configuration
-* Update the pre-build images in $MANIFEST_TOOL/prebuilt/$PROJECT/
-    ```
-    ├── prebuilt
-    │   ├── ast2700-default
-    │   │   ├── atf.bin
-    │   │   ├── caliptra-fw.bin
-    │   │   ├── ddr4_2d_pmu_train_dmem.bin
-    │   │   ├── ddr4_2d_pmu_train_imem.bin
-    │   │   ├── ddr4_pmu_train_dmem.bin
-    │   │   ├── ddr4_pmu_train_imem.bin
-    │   │   ├── ddr5_pmu_train_dmem.bin
-    │   │   ├── ddr5_pmu_train_imem.bin
-    │   │   ├── dp_fw.bin
-    │   │   ├── optee.bin
-    │   │   ├── ssp.bin
-    │   │   ├── tsp.bin
-    │   │   ├── u-boot.bin
-    │   │   ├── u-boot-spl.bin
-    │   │   └── uefi_ast2700.bin
-    ```
-* Update customer key in $MANIFEST_TOOL/key/$PROJECT/
-    ```
-    ├── key
-    │   ├── ast2700-default
-    │   │   ├── own-fw-ecc-prvk.pem
-    │   │   ├── own-fw-ecc-pubk.pem
-    │   │   ├── own-fw-lms-prvk.pem
-    │   │   ├── own-fw-lms-pubk.pem
-    │   │   ├── own-man-ecc-prvk.pem
-    │   │   ├── own-man-ecc-pubk.pem
-    │   │   ├── own-man-lms-prvk.pem
-    │   │   ├── own-man-lms-pubk.pem
-    │   │   ├── vnd-fw-ecc-prvk.pem
-    │   │   ├── vnd-fw-ecc-pubk.pem
-    │   │   ├── vnd-fw-lms-prvk.pem
-    │   │   ├── vnd-fw-lms-pubk.pem
-    │   │   ├── vnd-man-ecc-prvk.pem
-    │   │   ├── vnd-man-ecc-pubk.pem
-    │   │   ├── vnd-man-lms-prvk.pem
-    │   │   └── vnd-man-lms-pubk.pem
-    ```
