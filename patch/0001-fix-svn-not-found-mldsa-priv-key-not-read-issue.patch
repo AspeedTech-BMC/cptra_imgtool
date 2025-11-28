@@ -1,0 +1,46 @@
+From a5526223bb793038f3c7e6e55f949955da12c2e4 Mon Sep 17 00:00:00 2001
+From: Jheng Shuo Lin <jheng-shuo_lin@aspeedtech.com>
+Date: Fri, 28 Nov 2025 14:49:57 +0800
+Subject: [PATCH] fix svn not found & mldsa priv key not read issue
+
+Signed-off-by: Jheng Shuo Lin <jheng-shuo_lin@aspeedtech.com>
+---
+ auth-manifest/app/src/config.rs | 5 +++++
+ auth-manifest/app/src/main.rs   | 5 +++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/auth-manifest/app/src/config.rs b/auth-manifest/app/src/config.rs
+index 6803f8b8..3a5b6689 100644
+--- a/auth-manifest/app/src/config.rs
++++ b/auth-manifest/app/src/config.rs
+@@ -99,6 +99,11 @@ fn key_config_from_file(
+         priv_keys.lms_priv_key = lms_priv_key_from_pem(&priv_key_path)?;
+     }
+ 
++    if let Some(pem_file) = &config.mldsa_priv_key {
++        let priv_key_path = path.join(pem_file);
++        priv_keys.mldsa_priv_key = Crypto::mldsa_priv_key_from_file(&priv_key_path)?;
++    }
++
+     Ok(AuthManifestGeneratorKeyConfig {
+         pub_keys: AuthManifestPubKeysConfig {
+             ecc_pub_key: Crypto::ecc_pub_key_from_pem(&path.join(&config.ecc_pub_key))?,
+diff --git a/auth-manifest/app/src/main.rs b/auth-manifest/app/src/main.rs
+index 18f2e0ff..d2901217 100644
+--- a/auth-manifest/app/src/main.rs
++++ b/auth-manifest/app/src/main.rs
+@@ -37,6 +37,11 @@ fn main() {
+                 .required(true)
+                 .value_parser(value_parser!(u32)),
+         )
++        .arg(
++            arg!(--"svn" <U32> "Manifest SVN Number")
++                .required(true)
++                .value_parser(value_parser!(u32)),
++        )
+         .arg(
+             arg!(--"flags" <U32> "Manifest Flags")
+                 .required(true)
+-- 
+2.34.1
+

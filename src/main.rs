@@ -47,6 +47,33 @@ fn main() {
                     .required(false)
                     .value_parser(value_parser!(PathBuf)),
             ),
+        Command::new("create-auth-man-2x")
+            .about("Create a new authorization manifest")
+            .arg(
+                arg!(--"cfg" <String> "config path")
+                    .required(true)
+                    .value_parser(value_parser!(String)),
+            )
+            .arg(
+                arg!(--"man" <FILE> "Output manifest file")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"key-dir" <String> "key directory")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"prebuilt-dir" <String> "prebuilt directory")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+            arg!(--"pqc-key-type" <U32> "Type of PQC key validation: 1: MLDSA; 3: LMS")
+                .required(true)
+                .value_parser(value_parser!(u32)),
+            ),
         Command::new("create-auth-flash")
             .about("Create a new authorization flash image")
             .arg(
@@ -87,6 +114,7 @@ fn main() {
 
     let result = match cmd.subcommand().unwrap() {
         ("create-auth-man", args) => run_auth_man_cmd(args),
+        ("create-auth-man-2x", args) => run_auth_man_cmd_2x(args),
         ("create-auth-flash", args) => run_auth_flash_cmd(args),
         (_, _) => unreachable!(),
     };
@@ -176,6 +204,63 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+pub(crate) fn run_auth_man_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
+    let path = config::AspeedManifestCreationPath::new_manifest(args)
+        .with_context(|| "Failed to create manifest creation path")?;
+    debug!("Manifest auth path:\n{:#?}", path);
+    show_important_cfg_path(&path);
+
+    /* Create caliptra manifest config according to aspeed manifest config */
+    let cfg = config::AspeedAuthManifestConfigFromFile::new(&path)?;
+    cfg.save_caliptra_cfg(&path)?;
+
+    /* To satisfy the key-dir validation requirements of caliptra-auth-manifest-app */
+    let key_dir = cfg.validate_key_dir_if_needed(path.key_dir.as_deref())?;
+    debug!("key_dir_to_auth_manifest_tool: {:#?}", key_dir.display());
+
+    /* Run the caliptra manifest tool to create the manifest */
+    let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
+    config::check_path_exists(cmd.as_path())?;
+
+    let mut child = std::process::Command::new(cmd)
+        .args([
+            "create-auth-man",
+            "--version",
+            &cfg.manifest_config.version.to_string(),
+            "--flags",
+            &cfg.manifest_config.flags.to_string(),
+            "--key-dir",
+            &key_dir.to_string(),
+            "--config",
+            &path.caliptra_cfg.to_string(),
+            "--out",
+            &path.manifest.to_string(),
+            "--pqc-key-type",
+            &args
+                .get_one::<u32>("pqc-key-type")
+                .unwrap()
+                .to_string(),
+            "--svn",
+            &cfg.manifest_config.security_version.to_string(),
+        ])
+        .spawn()
+        .expect("Failed to execute command");
+
+    /* Wait for the process to exit */
+    let _ = child.wait().expect("Failed to wait on child");
+
+    // TODO
+    /* Post-Processing to meet aspeed proprietary feature */ 
+    // let mut soc_man = soc_man::AspeedAuthorizationManifest::new(&path.manifest.unwrap_or_err());
+    // soc_man.modify_vnd_ecc_sig()?;
+    // soc_man.modify_vnd_lms_sig()?;
+    // soc_man.insert_security_version(&path, &cfg, &key_dir);
+    // soc_man.close();
+
+    Ok(())
+}
+
 
 pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let path = config::AspeedManifestCreationPath::new_flash(args)

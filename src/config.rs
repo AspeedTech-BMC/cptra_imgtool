@@ -51,6 +51,10 @@ pub(crate) struct AuthManifestKeyConfigFromFile {
     pub lms_pub_key: Option<String>,
 
     pub lms_priv_key: Option<String>,
+
+    pub mldsa_pub_key: Option<String>,
+
+    pub mldsa_priv_key: Option<String>,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
@@ -64,6 +68,16 @@ pub(crate) struct ImageMetadataConfigFromFile {
     pub ignore_auth_check: bool,
 
     pub load_stage: u32,
+
+    pub exec_bit: Option<u32>,
+
+    pub component_id: Option<u32>,
+
+    pub image_load_address: Option<u64>,
+
+    pub image_staging_address: Option<u64>,
+
+    pub classification: Option<u32>,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
@@ -120,6 +134,16 @@ pub(crate) struct AspeedImageMetadataConfigFromFile {
     pub ignore_auth_check: bool,
 
     pub load_stage: u32,
+
+    pub exec_bit: Option<u32>,
+
+    pub component_id: Option<u32>,
+
+    pub image_load_address: Option<u64>,
+
+    pub image_staging_address: Option<u64>,
+
+    pub classification: Option<u32>,    
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug)]
@@ -360,6 +384,11 @@ impl AspeedAuthManifestConfigFromFile {
                     fw_id: img.fw_id,
                     ignore_auth_check: img.ignore_auth_check,
                     load_stage: img.load_stage,
+                    exec_bit: img.exec_bit,
+                    component_id: img.component_id,
+                    image_load_address: img.image_load_address,
+                    image_staging_address: img.image_staging_address,
+                    classification: img.classification,
                 }
             })
             .collect();
