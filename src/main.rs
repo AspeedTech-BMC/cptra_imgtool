@@ -70,9 +70,9 @@ fn main() {
                     .value_parser(value_parser!(PathBuf)),
             )
             .arg(
-            arg!(--"pqc-key-type" <U32> "Type of PQC key validation: 1: MLDSA; 3: LMS")
-                .required(true)
-                .value_parser(value_parser!(u32)),
+                arg!(--"pqc-key-type" <U32> "Type of PQC key validation: 1: MLDSA; 3: LMS")
+                    .required(true)
+                    .value_parser(value_parser!(u32)),
             ),
         Command::new("create-auth-flash")
             .about("Create a new authorization flash image")
@@ -101,6 +101,38 @@ fn main() {
                     .required(false)
                     .value_parser(value_parser!(PathBuf)),
             ),
+        Command::new("create-auth-flash-2x")
+            .about("Create a new authorization flash image")
+            .arg(
+                arg!(--"cfg" <String> "config path")
+                    .required(true)
+                    .value_parser(value_parser!(String)),
+            )
+            .arg(
+                arg!(--"man" <FILE> "Input manifest file")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"flash" <FILE> "Output flash file")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"key-dir" <String> "key directory")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"prebuilt-dir" <String> "prebuilt directory")
+                    .required(false)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"pqc-key-type" <U32> "Type of PQC key validation: 1: MLDSA; 3: LMS")
+                    .required(true)
+                    .value_parser(value_parser!(u32)),
+            ),
     ];
 
     /* Init environment logger */
@@ -116,6 +148,7 @@ fn main() {
         ("create-auth-man", args) => run_auth_man_cmd(args),
         ("create-auth-man-2x", args) => run_auth_man_cmd_2x(args),
         ("create-auth-flash", args) => run_auth_flash_cmd(args),
+        ("create-auth-flash-2x", args) => run_auth_flash_cmd_2x(args),
         (_, _) => unreachable!(),
     };
 
@@ -237,10 +270,7 @@ pub(crate) fn run_auth_man_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
             "--out",
             &path.manifest.to_string(),
             "--pqc-key-type",
-            &args
-                .get_one::<u32>("pqc-key-type")
-                .unwrap()
-                .to_string(),
+            &args.get_one::<u32>("pqc-key-type").unwrap().to_string(),
             "--svn",
             &cfg.manifest_config.security_version.to_string(),
         ])
@@ -251,7 +281,7 @@ pub(crate) fn run_auth_man_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
     let _ = child.wait().expect("Failed to wait on child");
 
     // TODO
-    /* Post-Processing to meet aspeed proprietary feature */ 
+    /* Post-Processing to meet aspeed proprietary feature */
     // let mut soc_man = soc_man::AspeedAuthorizationManifest::new(&path.manifest.unwrap_or_err());
     // soc_man.modify_vnd_ecc_sig()?;
     // soc_man.modify_vnd_lms_sig()?;
@@ -260,7 +290,6 @@ pub(crate) fn run_auth_man_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
 
     Ok(())
 }
-
 
 pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let path = config::AspeedManifestCreationPath::new_flash(args)
@@ -346,6 +375,58 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
             path.flash_image.to_string()
         );
     }
+
+    Ok(())
+}
+
+pub(crate) fn run_auth_flash_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
+    let path = config::AspeedManifestCreationPath::new_flash(args)
+        .with_context(|| "Failed to create manifest creation path")?;
+    debug!("Flash auth path:\n{:#?}", path);
+
+    /* If the user didn't specify the prebuild manifest, create it. */
+    if !args.contains_id("man") {
+        run_auth_man_cmd_2x(args)?;
+    }
+
+    /* Get the aspeed configuration */
+    let cfg = config::AspeedAuthManifestConfigFromFile::new(&path)?;
+
+    /* To meet requirement: add FMC to SoC manifest but not in flash images list */
+    const MCU_RUN_TIME_FW_ID: u32 = 1;
+    /* Run the caliptra flash image tool to create the flash image */
+    let bl_list_args = std::iter::once("--soc-images")
+        .chain(
+            cfg.image_metadata_list
+                .iter()
+                .filter(|img| img.fw_id != MCU_RUN_TIME_FW_ID)
+                .map(|s| s.file.as_str()),
+        )
+        .collect::<Vec<_>>();
+    debug!("Caliptra flash image tool args: {:#?}", bl_list_args);
+
+    let cmd = path.tool_dir.join("xtask");
+    config::check_path_exists(cmd.as_path())?;
+
+    let mut child = std::process::Command::new(cmd)
+        .args([
+            "flash-image",
+            "create",
+            "--caliptra-fw",
+            &cfg.image_runtime_list.caliptra_file,
+            "--soc-manifest",
+            &path.manifest.to_string(),
+            "--mcu-runtime",
+            &cfg.image_runtime_list.mcu_file,
+            "--output",
+            &path.flash_image.to_string(),
+        ])
+        .args(bl_list_args)
+        .spawn()
+        .expect("Failed to execute command");
+
+    /* Wait for the process to exit */
+    let _ = child.wait().expect("Failed to wait on child");
 
     Ok(())
 }
