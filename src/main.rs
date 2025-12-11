@@ -288,6 +288,9 @@ pub(crate) fn run_auth_man_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
     // soc_man.insert_security_version(&path, &cfg, &key_dir);
     // soc_man.close();
 
+    // padding the manifest to align 256 bytes for Recovery Interface requirement
+    soc_man::pad_file_to_256(&path.manifest.unwrap_or_err())?;
+
     Ok(())
 }
 

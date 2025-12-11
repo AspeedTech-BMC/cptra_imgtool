@@ -18,7 +18,8 @@ use anyhow::{anyhow, Result};
 use log::{debug, info};
 use p384::ecdsa::Signature;
 use std::fs;
-use std::io::{self, Write};
+use std::fs::OpenOptions;
+use std::io::{self, Seek, SeekFrom, Write};
 use std::mem::size_of;
 use std::path::Path;
 use std::path::PathBuf;
@@ -181,6 +182,49 @@ pub fn combine_binaries_overwrite_manifest(
     let mut f = fs::File::create(Path::new(manifest_bundle))?;
     f.write_all(&out)?;
     f.flush()?;
+
+
+    Ok(())
+}
+
+pub fn pad_file_to_256<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
+    const ALIGN: u64 = 256;
+
+    // Open the file for read/write access
+    let mut file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(path.as_ref())?;
+
+    // Get the current file size
+    let metadata = file.metadata()?;
+    let size_before = metadata.len(); // in bytes
+
+    // Calculate how many bytes of padding are needed
+    let padding = if size_before % ALIGN == 0 {
+        0
+    } else {
+        ALIGN - (size_before % ALIGN)
+    };
+
+    // Seek to the end of the file
+    file.seek(SeekFrom::End(0))?;
+
+    // Create a zeroed buffer of the required padding size (0 is fine too)
+    let buf = vec![0u8; padding as usize];
+    file.write_all(&buf)?;
+    file.flush()?;
+
+    let size_after = size_before + padding;
+
+    println!(
+        "File {:?}: size before padding = {} bytes, after padding = {} bytes (padded {} bytes, align = {} bytes)",
+        path.as_ref(),
+        size_before,
+        size_after,
+        padding,
+        ALIGN,
+    );
 
     Ok(())
 }
