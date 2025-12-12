@@ -143,7 +143,7 @@ pub(crate) struct AspeedImageMetadataConfigFromFile {
 
     pub image_staging_address: Option<u64>,
 
-    pub classification: Option<u32>,    
+    pub classification: Option<u32>,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug)]
@@ -426,6 +426,8 @@ pub(crate) struct AspeedManifestCreationPath {
     pub flash_image: Option<PathBuf>,
 
     pub svn_sig: Option<PathBuf>,
+
+    pub fw_toc: Option<PathBuf>,
 }
 
 impl AspeedManifestCreationPath {
@@ -521,12 +523,32 @@ impl AspeedManifestCreationPath {
         Ok(manifest)
     }
 
-    fn get_flash_image_path(args: &ArgMatches, prj: &String) -> Result<PathBuf> {
+    fn get_fw_toc_path(args: &ArgMatches, prj: &String) -> Result<PathBuf> {
         // Retrieve the flash image path from command-line arguments or use the default
+        let flash = Self::flash_image_path(args, prj);
+        let fw_toc = flash.with_file_name("fw_toc.bin");
+
+        // Remove the existing file (if any) to avoid conflicts
+        if fw_toc.is_file() {
+            fs::remove_file(&fw_toc).map_err(|e| {
+                anyhow::anyhow!("Failed to remove existing flash file {:?}: {}", fw_toc, e)
+            })?;
+        }
+
+        Ok(fw_toc)
+    }
+
+    fn flash_image_path(args: &ArgMatches, prj: &String) -> PathBuf {
         let flash = args
             .get_one::<PathBuf>("flash")
             .cloned()
             .unwrap_or_else(|| PathBuf::from(format!("out/{}-flash-image.bin", prj)));
+        flash
+    }
+
+    fn get_flash_image_path(args: &ArgMatches, prj: &String) -> Result<PathBuf> {
+        // Retrieve the flash image path from command-line arguments or use the default
+        let flash = Self::flash_image_path(args, prj);
 
         // Ensure that the parent directory exists; create it if necessary
         if let Some(parent) = flash.parent() {
@@ -595,6 +617,7 @@ impl AspeedManifestCreationPath {
             manifest: Some(Self::get_manifest_path(args, &prj)?),
             flash_image: None,
             svn_sig: Some(Self::get_svn_sig_path(args)?),
+            fw_toc: None,
         })
     }
 
@@ -615,6 +638,7 @@ impl AspeedManifestCreationPath {
             manifest: Some(Self::get_manifest_path(args, &prj)?),
             flash_image: Some(Self::get_flash_image_path(args, &prj)?),
             svn_sig: None,
+            fw_toc: Some(Self::get_fw_toc_path(args, &prj)?),
         })
     }
 }
