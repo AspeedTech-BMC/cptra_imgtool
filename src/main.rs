@@ -396,6 +396,11 @@ pub(crate) fn run_auth_flash_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
     /* Get the aspeed configuration */
     let cfg = config::AspeedAuthManifestConfigFromFile::new(&path)?;
 
+    /* To meet requirement: add FMC to SoC manifest but not in flash images list */
+    unsafe {
+        config::MCU_RUN_TIME_FW_ID = 2;
+    }
+
     /* Run the caliptra flash image tool to create the flash image */
     let bl_list_args = std::iter::once("--soc-images")
         .chain(

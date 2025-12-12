@@ -14,7 +14,7 @@ Abstract:
 
 use crate::config;
 
-use log::{debug, info};
+use log::{debug};
 use std::fs::File;
 use std::io;
 use std::io::Result;
@@ -22,6 +22,8 @@ use std::io::Write;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
+// pub const FLASH_HEADER_MAGIC: u32 = 0x48534C46; // "FLSH"
+pub const TOC_HEADER_MAGIC: u32 = 0x434F5441;   // "ATOC"
 pub const IMAGE_COUNT: usize = 32;
 pub const FILENAME_LEN: usize = 64;
 
@@ -137,7 +139,8 @@ pub fn create_fw_toc_from_flash_image(
     let mut flash_file = File::open(flash_path)?;
 
     // Read FlashHeader
-    let header = read_flash_header(&mut flash_file)?;
+    let mut header = read_flash_header(&mut flash_file)?;
+    header.magic = TOC_HEADER_MAGIC;
     debug!("FlashHeader = {:#?}", header);
 
     // Determine how many ImageHeaders to read

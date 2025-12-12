@@ -209,3 +209,15 @@ component_id = 0
 image_load_address = 0x0000000000000000
 image_staging_address = 0x0000000000000000
 classification = 0
+
+[[image_metadata_list]]
+file = "mcu-runtime.bin"
+source = 1
+fw_id = 0x100d
+ignore_auth_check = false
+load_stage = 1
+exec_bit = 0
+component_id = 0
+image_load_address = 0x0000000000000000
+image_staging_address = 0x0000000000000000
+classification = 0
