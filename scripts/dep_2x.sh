@@ -20,13 +20,12 @@ if [ ! -d $CPTRA_SW_DIR ]; then
     cptra_printf "Cloning caliptra-sw repository..."
     git clone https://github.com/chipsalliance/caliptra-sw.git $CPTRA_SW_DIR
     cd $CPTRA_SW_DIR
-    git checkout caliptra-2.1-dev
-    git am ../patch/0001-fix-svn-not-found-mldsa-priv-key-not-read-issue.patch
+    git checkout main
     git submodule init
     git submodule update dpe
 else
     cptra_printf "Caliptra-sw repository already exists."
-    # cptra_printf "Update to lastest version on caliptra-2.1-dev branch."
+    # cptra_printf "Update to lastest version on main branch."
     # cd $CPTRA_SW_DIR
     # git pull --rebase
 fi
