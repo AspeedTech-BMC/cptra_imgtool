@@ -1,0 +1,20 @@
+[package]
+edition = "2024"
+name = "rust_sign_helper"
+version = "0.1.0"
+
+[dependencies]
+anyhow = "1"
+caliptra-image-crypto = { path = "../../caliptra-sw/image/crypto", features = ["openssl"] }
+caliptra-image-types = {path = "../../caliptra-sw/image/types"}
+caliptra-auth-man-gen = { path = "../../caliptra-sw/auth-manifest/gen"}
+caliptra-image-gen = {path = "../../caliptra-sw/image/gen"}
+hex = "0.4"
+openssl = {version = "0.10", optional = true}
+p384 = {version = "0.13", features = ["pem"]}
+sec1 = "0.7"
+bincode = "1.3"
+
+[features]
+default = ["openssl"]
+openssl = ["dep:openssl"]

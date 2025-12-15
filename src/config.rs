@@ -73,6 +73,8 @@ pub(crate) struct AuthManifestConfigFromFile {
     pub owner_man_key_config: Option<AuthManifestKeyConfigFromFile>,
 
     pub image_metadata_list: Vec<ImageMetadataConfigFromFile>,
+
+    pub sign_helper: Option<AspeedAuthManifestSignHelper>,
 }
 
 /* Aspeed defined configuration toml file */
@@ -112,6 +114,15 @@ pub(crate) struct AspeedImageMetadataConfigFromFile {
     pub load_stage: u32,
 }
 
+#[derive(Default, Serialize, Deserialize, Clone, Debug)]
+pub struct AspeedAuthManifestSignHelper {
+    pub owner_ecc_fw_key_sign_helper: Option<String>,
+    pub owner_ecc_man_key_sign_helper: Option<String>,
+    pub owner_lms_fw_key_sign_helper: Option<String>,
+    pub owner_lms_man_key_sign_helper: Option<String>,
+    pub by_file: Option<bool>,
+}
+
 #[derive(Default, Serialize, Deserialize, Debug)]
 pub(crate) struct AspeedAuthManifestConfigFromFile {
     pub manifest_config: AspeedAuthManifestGeneralConfigFromFile,
@@ -127,6 +138,8 @@ pub(crate) struct AspeedAuthManifestConfigFromFile {
     pub image_runtime_list: AspeedImageRuntimeConfigFromFile,
 
     pub image_metadata_list: Vec<AspeedImageMetadataConfigFromFile>,
+
+    pub sign_helper: Option<AspeedAuthManifestSignHelper>,
 }
 
 fn pad_to_aligned(mut data: Vec<u8>, pad: u8, aligned: usize) -> Vec<u8> {
@@ -243,8 +256,16 @@ impl AspeedAuthManifestConfigFromFile {
     pub(crate) fn has_any_key(&self) -> bool {
         self.vendor_fw_key_config.has_any_key()
             || self.vendor_man_key_config.has_any_key()
-            || self.owner_fw_key_config.as_ref().map(|c| c.has_any_key()).unwrap_or(false)
-            || self.owner_man_key_config.as_ref().map(|c| c.has_any_key()).unwrap_or(false)
+            || self
+                .owner_fw_key_config
+                .as_ref()
+                .map(|c| c.has_any_key())
+                .unwrap_or(false)
+            || self
+                .owner_man_key_config
+                .as_ref()
+                .map(|c| c.has_any_key())
+                .unwrap_or(false)
     }
 
     pub(crate) fn validate_key_dir_if_needed(
@@ -252,7 +273,8 @@ impl AspeedAuthManifestConfigFromFile {
         key_dir: Option<&Path>,
     ) -> anyhow::Result<PathBuf> {
         if self.has_any_key() {
-            let dir = key_dir.ok_or_else(|| anyhow!("Key directory is required when keys are specified"))?;
+            let dir = key_dir
+                .ok_or_else(|| anyhow!("Key directory is required when keys are specified"))?;
             check_path_exists(dir)?;
             Ok(dir.to_path_buf())
         } else {
@@ -285,6 +307,7 @@ impl AspeedAuthManifestConfigFromFile {
                 }
             })
             .collect();
+        cfg.sign_helper = self.sign_helper.clone();
 
         /* Create the caliptra manifest read from aspeed manifest config */
         let caliptra_cfg = &path_mngt.caliptra_cfg.unwrap_or_err();

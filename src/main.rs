@@ -118,7 +118,8 @@ pub(crate) fn show_important_cfg_path(cfg: &config::AspeedManifestCreationPath) 
             .map(|p| p.display().to_string())
             .unwrap_or_else(|| "<None>".to_string())
     );
-    println!("caliptra_cfg : {}",
+    println!(
+        "caliptra_cfg : {}",
         cfg.caliptra_cfg
             .as_ref()
             .map(|p| p.display().to_string())
