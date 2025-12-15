@@ -14,21 +14,24 @@ Abstract:
 
 use crate::config;
 
-use log::{debug};
+use core::mem::size_of;
+use log::debug;
+use memoffset::offset_of;
 use std::fs::File;
 use std::io;
 use std::io::Result;
 use std::io::Write;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
+use zerocopy::{FromBytes, Immutable, IntoBytes};
 
 // pub const FLASH_HEADER_MAGIC: u32 = 0x48534C46; // "FLSH"
-pub const TOC_HEADER_MAGIC: u32 = 0x434F5441;   // "ATOC"
+pub const TOC_HEADER_MAGIC: u32 = 0x434F5441; // "ATOC"
 pub const IMAGE_COUNT: usize = 32;
 pub const FILENAME_LEN: usize = 64;
 
 #[repr(C)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, FromBytes, IntoBytes, Immutable)]
 pub struct FlashHeader {
     pub magic: u32,
     pub version: u16,
@@ -38,7 +41,7 @@ pub struct FlashHeader {
 }
 
 #[repr(C)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, FromBytes, IntoBytes, Immutable)]
 pub struct ImageHeader {
     pub identifier: u32,
     pub offset: u32,
@@ -119,6 +122,22 @@ fn set_filename(dst: &mut [u8; FILENAME_LEN], path_str: &str) -> io::Result<()> 
 
     Ok(())
 }
+
+const fn fw_filenames_base_offset() -> usize {
+    size_of::<FlashHeader>() + size_of::<ImageHeader>() * IMAGE_COUNT
+}
+
+const fn fw_toc_filename_offset(n: usize) -> usize {
+    fw_filenames_base_offset() + n * FILENAME_LEN
+}
+
+fn calculate_checksum(data: &[u8]) -> u32 {
+    let sum = data
+        .iter()
+        .fold(0u32, |acc, &byte| acc.wrapping_add(byte as u32));
+    0u32.wrapping_sub(sum)
+}
+
 pub fn create_fw_toc_from_flash_image(
     path: config::AspeedManifestCreationPath,
     cfg: &config::AspeedAuthManifestConfigFromFile,
@@ -141,7 +160,9 @@ pub fn create_fw_toc_from_flash_image(
     // Read FlashHeader
     let mut header = read_flash_header(&mut flash_file)?;
     header.magic = TOC_HEADER_MAGIC;
-    debug!("FlashHeader = {:#?}", header);
+    header.header_checksum =
+        calculate_checksum(header.as_bytes()[..offset_of!(FlashHeader, header_checksum)].as_ref());
+    debug!("TOC HEADER = {:#?}", header);
 
     // Determine how many ImageHeaders to read
     let img_count = header.image_count as usize;
@@ -179,6 +200,11 @@ pub fn create_fw_toc_from_flash_image(
 
     for i in 0..img_count {
         payload.image_info[i] = image_headers[i];
+        payload.image_info[i].offset = fw_toc_filename_offset(i) as u32;
+        payload.image_info[i].image_header_checksum = calculate_checksum(
+            payload.image_info[i].as_bytes()[..offset_of!(ImageHeader, image_header_checksum)]
+                .as_ref(),
+        );
     }
 
     set_filename(
