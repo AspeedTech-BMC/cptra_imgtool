@@ -32,10 +32,10 @@ prj_name = "ast2700-default"
 
 [image_runtime_list]
 caliptra_file = "caliptra-fw.bin"
-mcu_file = "u-boot-spl.bin"
+mcu_file = "zephyr-mcu-runtime.bin"
 
 [[image_metadata_list]]
-file = "u-boot-spl.bin"
+file = "zephyr-mcu-runtime.bin"
 source = 1
 fw_id = 1
 ignore_auth_check = false
