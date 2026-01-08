@@ -248,7 +248,10 @@ impl AspeedAuthorizationManifest {
         let sig =
             std::fs::read(path.svn_sig.unwrap_or_err()).expect("Failed to read svn signature file");
         let ecc_sig: [u8; ECC384_SIG_SIZE] = from_img(&sig, 0);
-        let lms_sig: [u8; LMS_SIG_SIZE] = from_img(&sig, ECC384_SIG_SIZE);
+        let mut lms_sig: [u8; LMS_SIG_SIZE] = from_img(&sig, ECC384_SIG_SIZE);
+
+        // Convert lms q endianness to match rom verification.
+        lms_sig[0..4].reverse();
 
         debug!("Security Version ECC Signature: {:02x?}", ecc_sig);
         debug!("Security Version LMS Signature: {:02x?}", lms_sig);
