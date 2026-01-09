@@ -4,7 +4,7 @@
 version = 1
 flags = 0
 security_version = 1
-prj_name = "ast2755-default"
+prj_name = "ast2755-fpga"
 
 [vendor_fw_key_config]
 ecc_pub_key = "vnd-fw-ecc-pub-key-1.pem"
@@ -211,7 +211,7 @@ image_staging_address = 0x0000000000000000
 classification = 0
 
 [[image_metadata_list]]
-file = "mcu-runtime.bin"
+file = "zephyr-mcu-runtime.bin"
 source = 1
 fw_id = 0x100d
 ignore_auth_check = false
