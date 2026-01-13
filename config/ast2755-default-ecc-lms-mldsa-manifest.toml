@@ -3,7 +3,7 @@
 [manifest_config]
 version = 1
 flags = 0
-security_version = 1
+security_version = 0
 prj_name = "ast2755-default"
 
 [vendor_fw_key_config]
