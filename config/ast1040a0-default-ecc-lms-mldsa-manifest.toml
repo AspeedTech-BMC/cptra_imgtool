@@ -3,8 +3,10 @@
 [manifest_config]
 version = 1
 flags = 0
-security_version = 1
+security_version = 0
 prj_name = "ast1040a0-default"
+padding_align_size = 256
+padding_out_folder = "out/padding_output"
 
 [vendor_fw_key_config]
 ecc_pub_key = "vnd-fw-ecc-pub-key-1.pem"

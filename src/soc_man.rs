@@ -187,9 +187,7 @@ pub fn combine_binaries_overwrite_manifest(
     Ok(())
 }
 
-pub fn pad_file_to_256<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
-    const ALIGN: u64 = 256;
-
+pub fn padding_file<P: AsRef<Path>>(path: P, padding_align_size: u64) -> std::io::Result<()> {
     // Open the file for read/write access
     let mut file = OpenOptions::new()
         .read(true)
@@ -201,10 +199,10 @@ pub fn pad_file_to_256<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
     let size_before = metadata.len(); // in bytes
 
     // Calculate how many bytes of padding are needed
-    let padding = if size_before % ALIGN == 0 {
+    let padding = if size_before % padding_align_size == 0 {
         0
     } else {
-        ALIGN - (size_before % ALIGN)
+        padding_align_size - (size_before % padding_align_size)
     };
 
     // Seek to the end of the file
@@ -223,7 +221,7 @@ pub fn pad_file_to_256<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
         size_before,
         size_after,
         padding,
-        ALIGN,
+        padding_align_size,
     );
 
     Ok(())

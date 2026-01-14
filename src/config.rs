@@ -110,6 +110,10 @@ pub(crate) struct AspeedAuthManifestGeneralConfigFromFile {
     pub flags: u32,
 
     pub security_version: u32,
+
+    pub padding_align_size: Option<u32>,
+
+    pub padding_out_folder: Option<String>,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
@@ -236,6 +240,65 @@ pub fn get_dummy_path() -> PathBuf {
     GLOBAL_DUMMY_PATH.clone()
 }
 
+pub fn make_aligned_padded_copy(
+    src: &Path,
+    out_dir: &Path,
+    align: u64,
+    suffix: &str,
+) -> anyhow::Result<PathBuf> {
+    // No alignment requested
+    if align == 0 {
+        return Ok(src.to_path_buf());
+    }
+
+    fs::create_dir_all(out_dir)?;
+
+    // Build output file name: <stem><suffix>.<ext>
+    let padded_name = match (src.file_stem(), src.extension()) {
+        (Some(stem), Some(ext)) => format!(
+            "{}{}.{ext}",
+            stem.to_string_lossy(),
+            suffix,
+            ext = ext.to_string_lossy()
+        ),
+        (Some(stem), None) => format!("{}{}", stem.to_string_lossy(), suffix),
+        _ => anyhow::bail!("Invalid file name: {:?}", src),
+    };
+
+    let dst = out_dir.join(padded_name);
+
+    // Copy source to destination (overwrites if destination already exists)
+    fs::copy(src, &dst)?;
+
+    // Calculate how many zero bytes to append to align to `align`
+    let file_size = fs::metadata(&dst)?.len();
+    let pad_len = (align - (file_size % align)) % align;
+
+    if pad_len > 0 {
+        let mut f = fs::OpenOptions::new().append(true).open(&dst)?;
+
+        const CHUNK: usize = 1024 * 1024; // 1MB chunks
+        let zeros = vec![0u8; CHUNK];
+        let mut remain = pad_len;
+
+        while remain > 0 {
+            let n = std::cmp::min(remain as usize, CHUNK);
+            f.write_all(&zeros[..n])?;
+            remain -= n as u64;
+        }
+    }
+
+    debug!(
+        "Align padded image: {:?}, size {} → {} (align {})",
+        dst,
+        file_size,
+        file_size + pad_len,
+        align
+    );
+
+    Ok(dst)
+}
+
 impl AuthManifestKeyConfigFromFile {
     pub fn has_any_key(&self) -> bool {
         self.ecc_pub_key.is_some()
@@ -247,31 +310,73 @@ impl AuthManifestKeyConfigFromFile {
 
 impl AspeedAuthManifestConfigFromFile {
     fn find_prebuilt_img_path(&mut self, path: &AspeedManifestCreationPath) -> Result<()> {
+        // Generate padded file name (preserve extension)
+        const PADDING_SUFFIX: &str = "";
+
         let dummy_path = GLOBAL_DUMMY_PATH.clone();
+
+        let padding_align_size = self.manifest_config.padding_align_size.unwrap_or(0) as u64;
+        let padding_out_folder = match self.manifest_config.padding_out_folder.as_deref() {
+            Some(folder) if !folder.is_empty() => PathBuf::from(folder),
+            _ => {
+                let tmp = GLOBAL_TMP_DIR.path().to_string_lossy().to_string();
+                self.manifest_config.padding_out_folder = Some(tmp.clone());
+                PathBuf::from(tmp)
+            }
+        };
 
         self.image_metadata_list = self
             .image_metadata_list
             .iter()
             .map(|img| -> anyhow::Result<AspeedImageMetadataConfigFromFile> {
+                // Resolve source image path
                 let new_file = if !img.file.is_empty() {
                     path.prebuilt_dir.join(&img.file)
                 } else {
                     dummy_path.clone()
                 };
-                debug!("New file path: {:?}", new_file);
+
+                // Ensure source image exists
                 check_path_exists(&new_file)?;
+
+                // If padding is enabled, generate an aligned padded copy and return its path.
+                // Otherwise, return the original path.
+                let final_file_path: PathBuf = if padding_align_size > 0 && !img.file.is_empty() {
+                    let padded_path = make_aligned_padded_copy(
+                        &new_file,
+                        &padding_out_folder,
+                        padding_align_size,
+                        PADDING_SUFFIX,
+                    )?;
+
+                    padded_path
+                } else {
+                    debug!("New file path: {:?}", new_file);
+                    new_file
+                };
+
                 Ok(AspeedImageMetadataConfigFromFile {
-                    file: new_file.to_string(),
+                    file: final_file_path.to_string_lossy().to_string(),
                     ..(*img).clone()
                 })
             })
             .collect::<anyhow::Result<Vec<_>>>()?;
 
+        // ---- caliptra runtime ----
         if !self.image_runtime_list.caliptra_file.is_empty() {
-            self.image_runtime_list.caliptra_file = path
+            let src = path
                 .prebuilt_dir
-                .join(&self.image_runtime_list.caliptra_file)
-                .to_string();
+                .join(&self.image_runtime_list.caliptra_file);
+            check_path_exists(&src.to_string_lossy().to_string())?;
+
+            // Generate aligned padded copy if needed, and return padded path
+            let padded = make_aligned_padded_copy(
+                &src,
+                &padding_out_folder,
+                padding_align_size,
+                PADDING_SUFFIX,
+            )?;
+            self.image_runtime_list.caliptra_file = padded.to_string_lossy().to_string();
         } else {
             if let Some(zero_caliptra_file_end) = self.image_runtime_list.zero_caliptra_file_end {
                 if zero_caliptra_file_end == 0 {
@@ -297,15 +402,23 @@ impl AspeedAuthManifestConfigFromFile {
         }
         check_path_exists(&self.image_runtime_list.caliptra_file)?;
 
+        // ---- mcu runtime ----
         if !self.image_runtime_list.mcu_file.is_empty() {
-            self.image_runtime_list.mcu_file = path
-                .prebuilt_dir
-                .join(&self.image_runtime_list.mcu_file)
-                .to_string();
+            let src = path.prebuilt_dir.join(&self.image_runtime_list.mcu_file);
+            check_path_exists(&src.to_string_lossy().to_string())?;
+
+            // Generate aligned padded copy if needed, and return padded path
+            let padded = make_aligned_padded_copy(
+                &src,
+                &padding_out_folder,
+                padding_align_size,
+                PADDING_SUFFIX,
+            )?;
+            self.image_runtime_list.mcu_file = padded.to_string_lossy().to_string();
         } else {
             self.image_runtime_list.mcu_file = dummy_path.to_string();
+            check_path_exists(&self.image_runtime_list.mcu_file)?;
         }
-        check_path_exists(&self.image_runtime_list.mcu_file)?;
 
         Ok(())
     }

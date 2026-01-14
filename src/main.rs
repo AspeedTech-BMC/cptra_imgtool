@@ -290,7 +290,10 @@ pub(crate) fn run_auth_man_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
     // soc_man.close();
 
     // padding the manifest to align 256 bytes for Recovery Interface requirement
-    soc_man::pad_file_to_256(&path.manifest.unwrap_or_err())?;
+    let padding_align_size = cfg.manifest_config.padding_align_size.unwrap_or(0) as u64;
+    if padding_align_size != 0 {
+        soc_man::padding_file(&path.manifest.unwrap_or_err(), padding_align_size)?;
+    }
 
     Ok(())
 }

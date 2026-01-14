@@ -182,8 +182,13 @@ pub fn create_fw_toc_from_flash_image(
     println!("=== ImageHeaders ===");
     for (i, hdr) in image_headers.iter().enumerate() {
         println!(
-            "ImageHeader[{}]: id={:#X} offset={:#X} size={:#X} chk={:#X} hdr_chk={:#X}",
-            i, hdr.identifier, hdr.offset, hdr.size, hdr.image_checksum, hdr.image_header_checksum,
+        "ImageHeader[{:>2}]: id={:#010X} offset={:#010X} size={:#010X} chk={:#010X} hdr_chk={:#010X}",
+            i,
+            hdr.identifier,
+            hdr.offset,
+            hdr.size,
+            hdr.image_checksum,
+            hdr.image_header_checksum,
         );
     }
 
