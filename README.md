@@ -152,14 +152,22 @@ If you need to use a different key, replace the original key file at the specifi
 ```
 
 ### Runtime Image List
-| Field           | Description                                                              |
-| --------------- | ------------------------------------------------------------------------ |
-| `caliptra_file` | The Caliptra firmware image. Please specify the final `caliptra-fw.bin`. |
-| `mcu_file`      | The first mutable code executed during boot (e.g., `zephyr-mcu-runtime.bin`).    |
+| Field           | Description                                                                   |
+| --------------- | ----------------------------------------------------------------------------- |
+| `caliptra_file` | The Caliptra firmware image. Please specify the final `caliptra-fw.bin`.      |
+| `mcu_file`      | The first mutable code executed during boot (e.g., `zephyr-mcu-runtime.bin`). |
 
 ### Image Metadata List
 
 The `image_metadata_list` defines the metadata entries included in the manifest or flash layout.  
+
+| Field               | Description                                                                                                                                                                                                                                                                           |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `file`              | Target file name in the prebuilt folder                                                                                                                                                                                                                                               |
+| `source`            | Defined in [caliptra-sw](https://github.com/chipsalliance/caliptra-sw/tree/rt-1.2.3/auth-manifest#metadata-entry-flags). Fixed value of `1` for `InRequest` in Caliptra 1.x                                                                                                           |
+| `fw_id`             | Unique ID used to identify the target image                                                                                                                                                                                                                                           |
+| `ignore_auth_check` | Defined in [caliptra-sw](https://github.com/chipsalliance/caliptra-sw/tree/rt-1.2.3/auth-manifest#metadata-entry-flags). If set, the image digest is not compared for the specified firmware ID                                                                                       |
+| `load_stage`        | Flag used by FMC (BootMCU runtime) to determine how the image is loaded in the main boot flow:<br>• `0`: Used only by specific drivers (e.g., `ddr_xx.bin`)<br>• `1`: May be loaded by the main boot flow (e.g., `atf.bin`)<br>• `2`: Used for the next-stage booting (iRoT solution) |
 
 If you want to remove an image from manifest or flash layout, locate its corresponding metadata entriy  
 and set `file = ""` and `load_stage = 0`.
