@@ -225,7 +225,7 @@ image_staging_address = 0x0000000000000000
 classification = 0
 
 [[image_metadata_list]]
-file = "zephyr_cm4_stress_v2.bin"
+file = "zephyr-shell-module.bin"
 source = 1
 fw_id = 0x100e
 ignore_auth_check = false
