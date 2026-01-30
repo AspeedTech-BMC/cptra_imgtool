@@ -21,6 +21,7 @@ use serde_derive::{Deserialize, Serialize};
 use sha2::{Digest, Sha384};
 use std::env;
 use std::fs;
+use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
@@ -98,6 +99,8 @@ pub(crate) struct AspeedAuthManifestGeneralConfigFromFile {
 pub(crate) struct AspeedImageRuntimeConfigFromFile {
     pub caliptra_file: String,
 
+    pub caliptra_file_zero_padding_target_offset: Option<u32>,
+
     pub mcu_file: String,
 }
 
@@ -140,6 +143,30 @@ pub(crate) struct AspeedAuthManifestConfigFromFile {
     pub image_metadata_list: Vec<AspeedImageMetadataConfigFromFile>,
 
     pub sign_helper: Option<AspeedAuthManifestSignHelper>,
+}
+
+pub fn create_tmp_file(name: &str, size: u64, fill: Option<u8>) -> PathBuf {
+    let path = GLOBAL_TMP_DIR.path().join(name);
+    let mut file = File::create(&path).unwrap();
+
+    match fill {
+        Some(byte) => {
+            const CHUNK_SIZE: usize = 4096;
+            let buf = [byte; CHUNK_SIZE];
+            let mut remaining = size;
+
+            while remaining > 0 {
+                let to_write = remaining.min(CHUNK_SIZE as u64) as usize;
+                file.write_all(&buf[..to_write]).unwrap();
+                remaining -= to_write as u64;
+            }
+        }
+        None => {
+            file.set_len(size).unwrap();
+        }
+    }
+
+    path
 }
 
 fn pad_to_aligned(mut data: Vec<u8>, pad: u8, aligned: usize) -> Vec<u8> {
@@ -213,7 +240,30 @@ impl AspeedAuthManifestConfigFromFile {
                 .join(&self.image_runtime_list.caliptra_file)
                 .to_string();
         } else {
-            self.image_runtime_list.caliptra_file = dummy_path.to_string();
+            if let Some(caliptra_file_zero_padding_target_offset) = self
+                .image_runtime_list
+                .caliptra_file_zero_padding_target_offset
+            {
+                if caliptra_file_zero_padding_target_offset == 0 {
+                    self.image_runtime_list.caliptra_file = dummy_path.to_string();
+                } else {
+                    let image_num = (self.image_metadata_list.len() as u32) - 1 + 3; // +3 for caliptra_fw, soc manifest,mcu_fw
+                    let image_header_size = 16 + 12 * image_num;
+
+                    self.image_runtime_list.caliptra_file = create_tmp_file(
+                        "caliptra_fw_tmp.bin",
+                        (caliptra_file_zero_padding_target_offset - image_header_size) as u64,
+                        Some(0),
+                    )
+                    .to_string();
+                    println!(
+                        "Created zero-padded caliptra fw file at {}",
+                        self.image_runtime_list.caliptra_file
+                    );
+                }
+            } else {
+                self.image_runtime_list.caliptra_file = dummy_path.to_string();
+            }
         }
         check_path_exists(&self.image_runtime_list.caliptra_file)?;
 
