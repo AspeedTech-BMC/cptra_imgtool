@@ -1,22 +1,50 @@
 # ASPEED CPTRA_IMGTOOL
 
-ASPEED CPTRA image tool is to packages the SoC image into caliptra flash image layout. This includes the 
-caliptra-core and caliptra-mcu runtime images, the Caliptra SoC manifest, prebuilt binaries and the 
-bootloaders for the AST27xxA2 platform.
+The ASPEED Caliptra image tool packages SoC images into the Caliptra flash image layout.
+
+## AST27xxA2 Platform
+
+For the AST27xxA2 platform, the generated manifest bundle binary includes:
+- `caliptra-runtime` image
+- `mcu-runtime` (fmc) image
+- Caliptra SoC manifest
+- Prebuilt binaries
+- Bootloaders
+
+![alt text](images/2700_a2_layout.png)
+
+## AST27xxA1 Platform
+
+For the AST27xxA1 platform, the generated manifest bundle binary includes:
+- Caliptra SoC manifest
+- Prebuilt binaries
+- Bootloaders
+
+> **Note:** The AST27xxA1 manifest bundle binary does **not** include `caliptra-runtime` or `mcu-runtime`.
+
+![alt text](images/2700_a1_layout.png)
+
+## Reference Configurations
+
+For more details, see:
+- [ast2700-default-manifest.toml](https://github.com/AspeedTech-BMC/cptra_imgtool/blob/master/config/ast2700-default-manifest.toml)
+- [ast2700a1-default-manifest.toml](https://github.com/AspeedTech-BMC/cptra_imgtool/blob/master/config/ast2700a1-default-manifest.toml)
+
+## Layout
 
 This flash image layout is divided four parts, header, checksum, image infromation, and image binary.
 If you want to know more detail about soc manifest, please refer to [Caliptra SoC Manifest](https://github.com/chipsalliance/caliptra-sw/tree/main/auth-manifest)
 
-## Header
+### Header
 ![alt text](images/image.png)
 
-## Checksum
+### Checksum
 ![alt text](images/image-1.png)
 
-## Image information
+### Image information
 ![alt text](images/image-2.png)
 
-## Image metadata list
+### Image metadata list
 ![alt text](images/image-3.png)
 
 # Requirement
