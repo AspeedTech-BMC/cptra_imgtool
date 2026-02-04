@@ -56,7 +56,7 @@ If you want to know more detail about soc manifest, please refer to [Caliptra So
     1. [Aspeed's caliptra-sw](https://github.com/AspeedTech-BMC/caliptra-sw)
         * Including Aspeed's proprietary feature like SVN version insert and prebuilt signature insert.
     2. [Official caliptra-mcu-sw](https://github.com/chipsalliance/caliptra-mcu-sw)
-        * If you are developing on the AST27XXA2 platform, you must apply the fix from commit  2b7837402328ab611968d40243075082469df7ae.
+        * ```If you are developing on the AST27XXA2 or AST27XXA1 platform, you must apply the fix from commit  2b7837402328ab611968d40243075082469df7ae```.
     * Build command
         ``` bash
         cd cptra_imgtool
