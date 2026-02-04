@@ -99,7 +99,7 @@ pub(crate) struct AspeedAuthManifestGeneralConfigFromFile {
 pub(crate) struct AspeedImageRuntimeConfigFromFile {
     pub caliptra_file: String,
 
-    pub caliptra_file_zero_padding_target_offset: Option<u32>,
+    pub zero_caliptra_file_end: Option<u32>,
 
     pub mcu_file: String,
 }
@@ -240,11 +240,11 @@ impl AspeedAuthManifestConfigFromFile {
                 .join(&self.image_runtime_list.caliptra_file)
                 .to_string();
         } else {
-            if let Some(caliptra_file_zero_padding_target_offset) = self
+            if let Some(zero_caliptra_file_end) = self
                 .image_runtime_list
-                .caliptra_file_zero_padding_target_offset
+                .zero_caliptra_file_end
             {
-                if caliptra_file_zero_padding_target_offset == 0 {
+                if zero_caliptra_file_end == 0 {
                     self.image_runtime_list.caliptra_file = dummy_path.to_string();
                 } else {
                     let image_num = (self.image_metadata_list.len() as u32) - 1 + 3; // +3 for caliptra_fw, soc manifest,mcu_fw
@@ -252,7 +252,7 @@ impl AspeedAuthManifestConfigFromFile {
 
                     self.image_runtime_list.caliptra_file = create_tmp_file(
                         "caliptra_fw_tmp.bin",
-                        (caliptra_file_zero_padding_target_offset - image_header_size) as u64,
+                        (zero_caliptra_file_end - image_header_size) as u64,
                         Some(0),
                     )
                     .to_string();
