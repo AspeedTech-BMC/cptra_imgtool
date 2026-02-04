@@ -102,6 +102,8 @@ pub(crate) struct AspeedImageRuntimeConfigFromFile {
     pub zero_caliptra_file_end: Option<u32>,
 
     pub mcu_file: String,
+
+    pub cptra_out_bundle: Option<bool>,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone)]
@@ -203,6 +205,10 @@ pub fn remove_tmp_folder() -> Result<()> {
     Ok(())
 }
 
+pub fn get_dummy_path() -> PathBuf {
+    GLOBAL_DUMMY_PATH.clone()
+}
+
 impl AuthManifestKeyConfigFromFile {
     pub fn has_any_key(&self) -> bool {
         self.ecc_pub_key.is_some()
@@ -240,10 +246,7 @@ impl AspeedAuthManifestConfigFromFile {
                 .join(&self.image_runtime_list.caliptra_file)
                 .to_string();
         } else {
-            if let Some(zero_caliptra_file_end) = self
-                .image_runtime_list
-                .zero_caliptra_file_end
-            {
+            if let Some(zero_caliptra_file_end) = self.image_runtime_list.zero_caliptra_file_end {
                 if zero_caliptra_file_end == 0 {
                     self.image_runtime_list.caliptra_file = dummy_path.to_string();
                 } else {

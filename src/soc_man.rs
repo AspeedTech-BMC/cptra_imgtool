@@ -17,7 +17,10 @@ use crate::utility::PathBufExt;
 use anyhow::{anyhow, Result};
 use log::{debug, info};
 use p384::ecdsa::Signature;
+use std::fs;
+use std::io::{self, Write};
 use std::mem::size_of;
+use std::path::Path;
 use std::path::PathBuf;
 
 const IMAGE_METADATA_MAX_COUNT: usize = 127;
@@ -112,6 +115,76 @@ fn to_img<T: Copy>(val: &T) -> Vec<u8> {
     unsafe { std::slice::from_raw_parts(ptr, size).to_vec() }
 }
 
+/// Combine three binaries into one image with fixed offsets and zero padding.
+/// Output file path == manifest_bundle (overwrite).
+///
+/// Layout:
+///   caliptra @ 0x0000_0000
+///   mcu      @ 0x0002_0000
+///   manifest @ 0x0010_0000
+///
+/// If a later blob would overlap earlier data, this returns an error.
+pub fn combine_binaries_overwrite_manifest(
+    caliptra_file: &str,
+    mcu_file: &str,
+    manifest_bundle: &str,
+) -> io::Result<()> {
+    const CALIPTRA_OFF: usize = 0x0;
+    const MCU_OFF: usize = 0x20000;
+    const MANIFEST_OFF: usize = 0x100000;
+
+    // Read all inputs first (safe even if we overwrite manifest_bundle later)
+    let caliptra = fs::read(caliptra_file)?;
+    let mcu = fs::read(mcu_file)?;
+    let manifest = fs::read(manifest_bundle)?;
+
+    // Overlap checks
+    let caliptra_end = CALIPTRA_OFF
+        .checked_add(caliptra.len())
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "caliptra size overflow"))?;
+    if caliptra_end > MCU_OFF {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!(
+                "caliptra overlaps MCU region: caliptra_end=0x{:X} > MCU_OFF=0x{:X}",
+                caliptra_end, MCU_OFF
+            ),
+        ));
+    }
+
+    let mcu_end = MCU_OFF
+        .checked_add(mcu.len())
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "mcu size overflow"))?;
+    if mcu_end > MANIFEST_OFF {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!(
+                "mcu overlaps manifest region: mcu_end=0x{:X} > MANIFEST_OFF=0x{:X}",
+                mcu_end, MANIFEST_OFF
+            ),
+        ));
+    }
+
+    let manifest_end = MANIFEST_OFF
+        .checked_add(manifest.len())
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "manifest size overflow"))?;
+
+    // Create output buffer filled with zeros up to last byte needed
+    let mut out = vec![0u8; manifest_end];
+
+    // Copy blobs into place
+    out[CALIPTRA_OFF..CALIPTRA_OFF + caliptra.len()].copy_from_slice(&caliptra);
+    out[MCU_OFF..MCU_OFF + mcu.len()].copy_from_slice(&mcu);
+    out[MANIFEST_OFF..MANIFEST_OFF + manifest.len()].copy_from_slice(&manifest);
+
+    // Write output (overwrite manifest_bundle)
+    let mut f = fs::File::create(Path::new(manifest_bundle))?;
+    f.write_all(&out)?;
+    f.flush()?;
+
+    Ok(())
+}
+
 impl AspeedAuthorizationManifest {
     pub(crate) fn new(path: &PathBuf) -> Self {
         let img = std::fs::read(path).expect("Failed to read SoC manifest file");
@@ -162,9 +235,7 @@ impl AspeedAuthorizationManifest {
         std::fs::write(self.path.clone(), image).expect("Failed to write SoC manifest file");
     }
 
-    pub(crate) fn modify_vnd_ecc_sig(
-        &mut self,
-    ) -> Result<()> {
+    pub(crate) fn modify_vnd_ecc_sig(&mut self) -> Result<()> {
         // Skip modification if not configured
         if self.preamble.vnd_manifest_ecc_sig == [0u8; ECC384_SIG_SIZE] {
             info!("No need to modify vendor ECC signature.");
@@ -194,9 +265,7 @@ impl AspeedAuthorizationManifest {
         Ok(())
     }
 
-    pub(crate) fn modify_vnd_lms_sig(
-        &mut self,
-    ) -> Result<()> {
+    pub(crate) fn modify_vnd_lms_sig(&mut self) -> Result<()> {
         // Skip modification if not configured
         if self.preamble.vnd_manifest_lms_sig == [0u8; LMS_SIG_SIZE] {
             info!("No need to modify vendor LMS signature.");

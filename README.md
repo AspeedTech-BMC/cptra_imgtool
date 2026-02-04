@@ -86,8 +86,13 @@ If you want to know more detail about soc manifest, please refer to [Caliptra So
 # Build only the Caliptra SoC Manifest
 ### Basic command with a specified config path:
 ``` bash
-cargo run create-auth-man --cfg config/ast2700-default-manifest.toml
+# AST27xxA2 example
+cargo run create-auth-man --cfg config/ast2700-default-ecc-manifest.toml
 # Output: out/ast2700-default-auth-manifest.bin
+
+# AST27xxA1 example
+cargo run create-auth-man --cfg config/ast2700a1-default-ecc-manifest.toml
+# Output: out/ast2700a1-default-auth-manifest.bin
 ```
 
 ### Command Options
@@ -105,7 +110,7 @@ The create-auth-man command supports the following arguments:
 Example with Optional Arguments
 ``` bash
 cargo run create-auth-man \
-    --cfg config/ast2700-default-manifest.toml \
+    --cfg config/ast2700-default-ecc-manifest.toml \
     --man out/soc-manifest.bin \
     --key-dir keys/ast2700-default/ \
     --prebuilt-dir prebuilt/ast2700-default/
@@ -113,11 +118,16 @@ cargo run create-auth-man \
 
 ---
 
-# Build the Caliptra Flash Image (including the Caliptra SoC manifest)
+# Build the Caliptra Manifest Bundle Image (including the Caliptra SoC manifest)
 ### Basic command with a specified config path:
 ``` bash
-cargo run create-auth-flash --cfg config/ast2700-default-manifest.toml
+# AST27xxA2 example
+cargo run create-auth-flash --cfg config/ast2700-default-ecc-manifest.toml
 # Output: out/ast2700-default-flash-image.bin
+
+# AST27xxA1 example
+cargo run create-auth-flash --cfg config/ast2700a1-default-ecc-manifest.toml
+# Output: out/ast2700a1-default-flash-image.bin
 ```
 
 ### Command Options
@@ -136,7 +146,7 @@ The create-auth-flash command supports the following arguments:
 Example with Optional Arguments
 ``` bash
 cargo run create-auth-flash \
-    --cfg config/ast2700-default-manifest.toml \
+    --cfg config/ast2700-default-ecc-manifest.toml \
     --man out/ast2700-default-auth-manifest.bin \
     --flash out/custom-flash-image.bin \
     --key-dir keys/ast2700-default/ \
@@ -144,6 +154,16 @@ cargo run create-auth-flash \
 ```
 
 ---
+
+# Build the AST27xxA1 Caliptra Flash Image (including the Caliptra runtime image, Caliptra SoC manifest, mcu-runtime image with ASPEED header)
+### Basic command with a specified config path:
+``` bash
+cargo run create-auth-flash --cfg config/ast2700a1-default-manifest-cptra-out-bundle.toml
+# Output: out/ast2700a1-default-flash-image.bin
+```
+
+![alt text](images/cptra_out_bundle.png)
+
 
 # TOML Configuration Description
 The configuration file defines parameters used during manifest generation and flash image construction.
@@ -181,10 +201,11 @@ If you need to use a different key, replace the original key file at the specifi
 ```
 
 ### Runtime Image List
-| Field           | Description                                                                   |
-| --------------- | ----------------------------------------------------------------------------- |
-| `caliptra_file` | The Caliptra firmware image. Please specify the final `caliptra-fw.bin`.      |
-| `mcu_file`      | The first mutable code executed during boot (e.g., `zephyr-mcu-runtime.bin`). |
+| Field              | Description                                                                                                                                                                                                                                           |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `caliptra_file`    | The Caliptra firmware image. Please specify the final `caliptra-fw.bin`.                                                                                                                                                                              |
+| `mcu_file`         | The first mutable code executed during boot (e.g., `zephyr-mcu-runtime.bin`).                                                                                                                                                                         |
+| `cptra_out_bundle` | For the AST2700 A1 flash layout, when this option is enabled, caliptra_file and mcu_file may reside outside the manifest bundle: <br>• caliptra_file offset: 0x0000_0000 <br>• mcu_file offset: 0x0002_0000 <br>• manifest bundle offset: 0x0010_0000 |
 
 ### Image Metadata List
 

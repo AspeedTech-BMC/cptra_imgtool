@@ -205,16 +205,29 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let cmd = path.tool_dir.join("xtask");
     config::check_path_exists(cmd.as_path())?;
 
+    let cptra_out_bundle = cfg.image_runtime_list.cptra_out_bundle.unwrap_or(false);
+    let dummy_path = config::get_dummy_path();
+    let caliptra_file = if cptra_out_bundle {
+        dummy_path.to_str().unwrap()
+    } else {
+        &cfg.image_runtime_list.caliptra_file
+    };
+    let mcu_file = if cptra_out_bundle {
+        dummy_path.to_str().unwrap()
+    } else {
+        &cfg.image_runtime_list.mcu_file
+    };
+
     let mut child = std::process::Command::new(cmd)
         .args([
             "flash-image",
             "create",
             "--caliptra-fw",
-            &cfg.image_runtime_list.caliptra_file,
+            caliptra_file,
             "--soc-manifest",
             &path.manifest.to_string(),
             "--mcu-runtime",
-            &cfg.image_runtime_list.mcu_file,
+            mcu_file,
             "--output",
             &path.flash_image.to_string(),
         ])
@@ -224,6 +237,24 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
 
     /* Wait for the process to exit */
     let _ = child.wait().expect("Failed to wait on child");
+
+    if cptra_out_bundle {
+        soc_man::combine_binaries_overwrite_manifest(
+            &cfg.image_runtime_list.caliptra_file,
+            &cfg.image_runtime_list.mcu_file,
+            &path.flash_image.to_string(),
+        )?;
+
+        println!(
+            "Created Caliptra out bundle flash image: {}",
+            path.flash_image.to_string()
+        );
+    } else {
+        println!(
+            "Created Caliptra flash image: {}",
+            path.flash_image.to_string()
+        );
+    }
 
     Ok(())
 }
