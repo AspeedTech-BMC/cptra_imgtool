@@ -201,11 +201,12 @@ If you need to use a different key, replace the original key file at the specifi
 ```
 
 ### Runtime Image List
-| Field              | Description                                                                                                                                                                                                                                           |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `caliptra_file`    | The Caliptra firmware image. Please specify the final `caliptra-fw.bin`.                                                                                                                                                                              |
-| `mcu_file`         | The first mutable code executed during boot (e.g., `zephyr-mcu-runtime.bin`).                                                                                                                                                                         |
-| `cptra_out_bundle` | For the AST2700 A1 flash layout, when this option is enabled, caliptra_file and mcu_file may reside outside the manifest bundle: <br>• caliptra_file offset: 0x0000_0000 <br>• mcu_file offset: 0x0002_0000 <br>• manifest bundle offset: 0x0010_0000 |
+| Field                    | Description                                                                                                                                                                                                                                           |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `caliptra_file`          | The Caliptra firmware image. Please specify the final `caliptra-fw.bin`.                                                                                                                                                                              |
+| `mcu_file`               | The first mutable code executed during boot (e.g., `zephyr-mcu-runtime.bin`).                                                                                                                                                                         |
+| `cptra_out_bundle`       | For the AST2700 A1 flash layout, when this option is enabled, caliptra_file and mcu_file may reside outside the manifest bundle: <br>• caliptra_file offset: 0x0000_0000 <br>• mcu_file offset: 0x0002_0000 <br>• manifest bundle offset: 0x0010_0000 |
+| `zero_caliptra_file_end` | If caliptra_file is an empty string, we can set a zero-filled padding size to generate a caliptra_file of the specified length. This ensures the SoC manifest is placed at the desired flash offset.                                                  |
 
 ### Image Metadata List
 
