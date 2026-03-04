@@ -2,6 +2,8 @@
 
 The ASPEED Caliptra Image Tool packages SoC images into the Caliptra flash image layout.
 
+---
+
 - [What it does](#what-it-does)
 - [Output Manifest Bundle Image Example](#output-manifest-bundle-image-example)
 - [Manifest Bundle FLASH Layout](#manifest-bundle-flash-layout)
@@ -13,7 +15,11 @@ The ASPEED Caliptra Image Tool packages SoC images into the Caliptra flash image
   - [Build the Caliptra Manifest Bundle Image (including the Caliptra SoC manifest)](#build-the-caliptra-manifest-bundle-image-including-the-caliptra-soc-manifest)
   - [Build the AST27xxA1 Caliptra Flash Image (including the Caliptra runtime image, Caliptra SoC manifest, mcu-runtime image with ASPEED header)](#build-the-ast27xxa1-caliptra-flash-image-including-the-caliptra-runtime-image-caliptra-soc-manifest-mcu-runtime-image-with-aspeed-header)
 - [TOML Configuration Description](#toml-configuration-description)
+  - [Image Update](#image-update)
+  - [Sign Helper](#sign-helper)
 - [Secure Boot Configuration](#secure-boot-configuration)
+- [Signing Using a Sign Helper](#signing-using-a-sign-helper)
+---
 
 ## What it does
 
@@ -340,6 +346,20 @@ cargo run create-auth-flash \
     --cfg config/ast2700-default-manifest.toml
 ```
 
+### Sign Helper
+The tool can sign images using a key configured in the TOML file. Alternatively, you can provide an external **signing helper** executable (e.g., written in Rust or Python) to perform the signing operation. This approach keeps private keys out of the image tool and prevents key material from being stored or revealed by the tool.
+
+| Field                         | Description                                                                                                                                                                                                                                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| owner_ecc_fw_key_sign_helper  | Command to perform signing **using the owner ECC FW key**.                                                                                                                                                                                                                                             |
+| owner_ecc_man_key_sign_helper | Command to perform signing **using the owner ECC MAN key**.                                                                                                                                                                                                                                            |
+| owner_lms_fw_key_sign_helper  | Command to perform signing **using the owner LMS FW key**.                                                                                                                                                                                                                                             |
+| owner_lms_man_key_sign_helper | Command to perform signing **using the owner LMS MAN key**.                                                                                                                                                                                                                                            |
+| by_file                       | Controls how the tool communicates with the signing helper. When `true`, the tool passes the *to-be-signed* data and receives the resulting signature via files. When `false`, the tool uses `stdin/stdout` for data/signature transfer (ensure the helper does not print extra messages to `stdout`). |
+
+For a sample configuration, refer to
+[ast2700a1-default-ecc-lms-fw-man-sign-helper-byfile-manifest.toml](https://github.com/AspeedTech-BMC/cptra_imgtool/blob/master/config/ast2700a1-default-ecc-lms-fw-man-sign-helper-byfile-manifest.toml#L135).
+
 ---
 
 ## Secure Boot Configuration
@@ -359,5 +379,58 @@ Depending on the signing scheme you intend to use, please refer to the following
   `config/ast2700-default-ecc-lms-manifest.toml`
 
 Select the configuration that matches your platform's secure boot policy before generating the manifest or flash image.
+
+## Signing Using a Sign Helper
+
+The tool supports two signing modes. By default, it can sign using keys provided in the TOML configuration.  
+Alternatively, you can use an external **sign helper** executable (e.g., implemented in Rust or Python) to perform the signing step. This allows the signing keys to remain outside the image tool and avoids storing or exposing key material within the tool.
+
+For parameter configuration, please refer to: [Sign Helper](#sign-helper)
+
+For a sample configuration, refer to
+[ast2700a1-default-ecc-lms-fw-man-sign-helper-byfile-manifest.toml](https://github.com/AspeedTech-BMC/cptra_imgtool/blob/master/config/ast2700a1-default-ecc-lms-fw-man-sign-helper-byfile-manifest.toml#L135).
+
+### Sign Helper Examples
+
+We provide both Python and Rust sign helper examples in the **sign_helper_example** directory.  
+Please refer to `sign_helper_example/ecc_sign_helper.py` and `sign_helper_example/rust_sign_helper`.
+
+### rust_sign_helper example
+
+Compile the `rust_sign_helper` example (ensure **caliptra-sw** has been cloned).
+``` bash
+cd sign_helper_example/rust_sign_helper/
+cargo build
+```
+
+### Data Transfer Between the Tool and Sign Helper
+
+The tool supports two methods to pass the **to-be-signed** data to the sign helper and receive the resulting **signature**:
+
+- **By file**: the tool writes the input to a file and reads the signature back from a file.
+- **By stdin/stdout**: the tool sends the input via `stdin` and reads the signature from `stdout`.
+
+The transfer method is configurable in the TOML file via `by_file`.
+
+- **By file**
+  - [Tool-side send/receive implementation](https://github.com/AspeedTech-BMC/caliptra-sw/blob/aspeed-rt-1.2.0/auth-manifest/gen/src/generator.rs#L568)
+  - [Sign-helper-side example implementation](https://github.com/AspeedTech-BMC/cptra_imgtool/blob/master/sign_helper_example/rust_sign_helper/src/main.rs#L83)
+- **By stdin/stdout**
+  - [Tool-side send/receive implementation](https://github.com/AspeedTech-BMC/caliptra-sw/blob/aspeed-rt-1.2.0/auth-manifest/gen/src/generator.rs#L623)
+  - [Sign-helper-side example implementation](https://github.com/AspeedTech-BMC/cptra_imgtool/blob/master/sign_helper_example/rust_sign_helper/src/main.rs#L117)
+
+### Sign Helper Assignment for FW Key and Manifest Key
+
+There are two ways to use the sign helper:
+
+1. **Use the sign helper for both FW owner private key and Manifest owner private key**  
+   The TOML file does not contain the FW owner private key or the Manifest owner private key. Both signing operations are performed by the sign helper.  
+   In this mode, the TOML file includes only the **Manifest owner public key**.  
+   Please refer to: [ast2700a1-default-ecc-lms-fw-man-sign-helper-byfile-manifest.toml](https://github.com/AspeedTech-BMC/cptra_imgtool/blob/master/config/ast2700a1-default-ecc-lms-fw-man-sign-helper-byfile-manifest.toml).
+
+2. **Use the sign helper for FW owner private key only**  
+   The TOML file does not contain the FW owner private key, and FW signing is performed by the sign helper.  
+   The TOML file stores the **Manifest owner key pair** (public/private), which is used for manifest signing.  
+   Please refer to: [ast2700a1-default-ecc-lms-fw-sign-helper-stdin-manifest.toml](https://github.com/AspeedTech-BMC/cptra_imgtool/blob/master/config/ast2700a1-default-ecc-lms-fw-sign-helper-stdin-manifest.toml).
 
 ---
