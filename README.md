@@ -17,6 +17,9 @@ The ASPEED Caliptra Image Tool packages SoC images into the Caliptra flash image
 - [TOML Configuration Description](#toml-configuration-description)
   - [Image Update](#image-update)
   - [Sign Helper](#sign-helper)
+- [Soc Manifest Layout](#soc-manifest-layout)
+  - [Aspeed 2700 A1/A2 layout](#aspeed-2700-a1a2-layout)
+  - [Trust Chain](#trust-chain)
 - [Secure Boot Configuration](#secure-boot-configuration)
 - [Signing Using a Sign Helper](#signing-using-a-sign-helper)
 ---
@@ -31,7 +34,7 @@ This tool performs two primary tasks:
 2. **Assemble Flash Image**  
    Packages all binaries together with the generated SoC manifest into a flash image that follows the layout described in the TOML configuration file.
 
-### SoC Manifest
+### Caliptra SoC Manifest
 
 In Caliptra, the **SoC manifest** is a metadata structure that describes the SoC-owned firmware/images to be loaded and verified.  
 In this version, the manifest focuses on identifying each image and providing integrity-related information (e.g., image ID, flags, and digests) so the SoC can validate the included contents before use.
@@ -361,6 +364,39 @@ For a sample configuration, refer to
 [ast2700a1-default-ecc-lms-fw-man-sign-helper-byfile-manifest.toml](https://github.com/AspeedTech-BMC/cptra_imgtool/blob/master/config/ast2700a1-default-ecc-lms-fw-man-sign-helper-byfile-manifest.toml#L135).
 
 ---
+
+## Soc Manifest Layout
+
+### Caliptra 1.2 original layout
+Please refer to https://github.com/chipsalliance/caliptra-sw/tree/rt-1.2.0/auth-manifest
+
+![alt text](images/caliptra_1.2_soc_man_layout.png)
+
+### Aspeed 2700 A1/A2 layout
+To support anti-rollback, our layout adds an **SVN** field and an **owner signature that covers the SVN value**.
+
+![alt text](images/aspeed_soc_man_layout.png)
+
+### Key and Signature Relationships in the ASPEED AST2700 A1/A2 SoC Manifest
+
+![alt text](images/soc_manifest_sign_verify_chain.png)
+
+### Trust Chain
+
+The trust chain for the AST2700 A1/A2 SoC manifest and IMC is as follows:
+
+- **Vendor chain**: `Fuse/OTP vendor PK hash → Caliptra FW vendor key → SoC manifest vendor key → IMC`
+- **Owner chain**: `Fuse/OTP owner PK hash → Caliptra FW owner key → SoC manifest owner key → IMC`
+
+![alt text](images/trust_chain.png)
+
+### Manifest Vendor Signature Generation
+
+As described in the trust chain above, the SoC manifest **vendor key** must be endorsed (signed) by the **vendor key** in Caliptra RT FW.
+
+However, the ASPEED FW vendor key is protected by an HSM and cannot be released for each vendor to perform signing. Therefore, the **Manifest Vendor Signature** is currently **pre-generated** and stored as a binary blob (stored in **src/vnd_sig/**).
+
+In the current flow, regardless of what value is provided as the vendor FW key (or what signature is produced during the tool run), the generated **Manifest Vendor Signature** will always be **overwritten** by the prebuilt signature. As a result, the **Manifest Vendor Public Key** and **Manifest Vendor Signature** are fixed to constant values.
 
 ## Secure Boot Configuration
 When Secure Boot is enabled, the manifest must be generated using the appropriate key configuration.  
