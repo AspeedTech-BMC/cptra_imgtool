@@ -4,6 +4,27 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow.workspace = true
+clap.workspace = true
+env_logger.workspace = true
+log.workspace = true
+p384.workspace = true
+serde.workspace = true
+serde_derive.workspace = true
+sha2.workspace = true
+hex.workspace = true
+toml.workspace = true
+zerocopy.workspace = true
+tempfile.workspace = true
+once_cell.workspace = true
+memoffset.workspace = true
+colored.workspace = true
+
+[workspace]
+members = [
+]
+
+[workspace.dependencies]
 anyhow = "=1.0.102"
 clap = { version = "=4.5.60", default-features = false, features = ["std"] }
 env_logger = "=0.11.9"
@@ -19,4 +40,3 @@ tempfile = "=3.26.0"
 once_cell = "=1.21.3"
 memoffset = "=0.9.1"
 colored = "=2.2.0"
-
