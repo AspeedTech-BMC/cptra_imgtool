@@ -18,4 +18,5 @@ zerocopy = { version = "=0.8.40", features = ["derive"] }
 tempfile = "=3.26.0"
 once_cell = "=1.21.3"
 memoffset = "=0.9.1"
+colored = "=2.2.0"
 

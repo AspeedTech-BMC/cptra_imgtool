@@ -14,6 +14,7 @@ Abstract:
 
 use crate::config;
 
+use colored::*;
 use core::mem::size_of;
 use log::debug;
 use memoffset::offset_of;
@@ -23,6 +24,7 @@ use std::io::Result;
 use std::io::Write;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
+use std::str;
 use zerocopy::{FromBytes, Immutable, IntoBytes};
 
 // pub const FLASH_HEADER_MAGIC: u32 = 0x48534C46; // "FLSH"
@@ -138,6 +140,12 @@ fn calculate_checksum(data: &[u8]) -> u32 {
     0u32.wrapping_sub(sum)
 }
 
+fn cstr_from_buf(buf: &[u8]) -> &str {
+    // Find NUL terminator if present; otherwise use the full buffer
+    let end = buf.iter().position(|&b| b == 0).unwrap_or(buf.len());
+    str::from_utf8(&buf[..end]).unwrap_or("<invalid utf-8>")
+}
+
 pub fn create_fw_toc_from_flash_image(
     path: config::AspeedManifestCreationPath,
     cfg: &config::AspeedAuthManifestConfigFromFile,
@@ -178,19 +186,6 @@ pub fn create_fw_toc_from_flash_image(
     )?;
 
     debug!("Loaded {} ImageHeaders", image_headers.len());
-
-    println!("=== ImageHeaders ===");
-    for (i, hdr) in image_headers.iter().enumerate() {
-        println!(
-        "ImageHeader[{:>2}]: id={:#010X} offset={:#010X} size={:#010X} chk={:#010X} hdr_chk={:#010X}",
-            i,
-            hdr.identifier,
-            hdr.offset,
-            hdr.size,
-            hdr.image_checksum,
-            hdr.image_header_checksum,
-        );
-    }
 
     let mut payload = FlashImagePayload {
         image_info: [ImageHeader {
@@ -242,6 +237,38 @@ pub fn create_fw_toc_from_flash_image(
             cur_img_count += 1;
             Ok(())
         })?; // propagate Result
+
+    // 1) Compute the max filename width in *character count* (NOT bytes)
+    let mut max_name_chars: usize = 0;
+    for i in 0..cur_img_count {
+        let name = cstr_from_buf(&payload.filenames[i]);
+        let c = name.chars().count(); // character length
+        if c > max_name_chars {
+            max_name_chars = c;
+        }
+    }
+    max_name_chars = max_name_chars + 1;
+
+    println!("=== ImageHeaders ===");
+    for i in 0..img_count {
+        let name = cstr_from_buf(&payload.filenames[i]);
+
+        // 2) Right-align by character width
+        // NOTE: format width uses "display width" roughly as chars count for most cases.
+        // For full terminal display width correctness (emoji/CJK), you'd need unicode-width.
+        let name_aligned = format!("{:>width$}", name, width = max_name_chars).bright_cyan();
+
+        println!(
+        "ImageHeader[{:>2}]: id={:#010X} offset={:#010X} size={:#010X} chk={:#010X} hdr_chk={:#010X} filename=#{}#",
+        i,
+        image_headers[i].identifier,
+        image_headers[i].offset,
+        image_headers[i].size,
+        image_headers[i].image_checksum,
+        image_headers[i].image_header_checksum,
+        name_aligned
+    );
+    }
 
     let fw_toc = FirmwareTOC { header, payload };
 
