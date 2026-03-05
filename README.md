@@ -378,7 +378,6 @@ To support anti-rollback, our layout adds an **SVN** field and an **owner signat
 ![alt text](images/aspeed_soc_man_layout.png)
 
 ### Key and Signature Relationships in the ASPEED AST2700 A1/A2 SoC Manifest
-
 ![alt text](images/soc_manifest_sign_verify_chain.png)
 
 ### Trust Chain
