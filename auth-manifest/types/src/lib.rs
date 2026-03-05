@@ -2,6 +2,8 @@
 
 Licensed under the Apache-2.0 license.
 
+Modified by ASPEED Technology Inc., 2026-03-05: Add load stage field support in manifest flags.
+
 File Name:
 
    lib.rs
@@ -146,6 +148,7 @@ bitfield! {
     pub image_source, set_image_source: 1, 0;
     pub ignore_auth_check, set_ignore_auth_check: 2;
     pub exec_bit, set_exec_bit: 14,8;
+    pub load_stage, set_image_load_stage: 31, 30;
 }
 
 #[repr(C)]

@@ -1,5 +1,7 @@
 # Licensed under the Apache-2.0 license
 
+# Modified by ASPEED Technology Inc., 2026-03-05: Add load stage field support in manifest flags.
+
 [vendor_fw_key_config]
 ecc_pub_key = "vnd-pub-key-3.pem"
 ecc_priv_key = "vnd-priv-key-3.pem"
@@ -37,15 +39,18 @@ digest = "C120EED0004B4CF6C344B00F5F501E7B7167C7010B6EA1D36AEE20CC90F1AE373DF1EC
 source = 1
 fw_id = 1
 ignore_auth_check = false
+load_stage = 1
 
 [[image_metadata_list]]
 digest = "99514329186b2f6ae4a1329e7ee6c610a729636335174ac6b740f9028396fcc803d0e93863a7c3d90f86beee782f4f3f"
 source = 2
 fw_id = 2
 ignore_auth_check = true
+load_stage = 1
 
 [[image_metadata_list]]
 digest = "9B514329186b2f6ae4a1329e7ee6c610a729636335174ac6b740f9028396fcc803d0e93863a7c3d90f86beee782f4f3f"
 source = 2
 fw_id = 3
 ignore_auth_check = false
+load_stage = 1

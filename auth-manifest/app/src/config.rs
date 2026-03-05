@@ -2,6 +2,8 @@
 
 Licensed under the Apache-2.0 license.
 
+Modified by ASPEED Technology Inc., 2026-03-05: Add load stage field support in manifest flags.
+
 File Name:
 
    config.rs
@@ -54,6 +56,7 @@ pub struct ImageMetadataConfigFromFile {
     image_load_address: u64,
     image_staging_address: u64,
     classification: u32,
+    load_stage: u32,
 }
 
 // Authorization Manifest configuration from TOML file
@@ -148,6 +151,7 @@ pub(crate) fn image_metadata_config_from_file(
         flags.set_ignore_auth_check(image.ignore_auth_check);
         flags.set_image_source(image.source);
         flags.set_exec_bit(image.exec_bit);
+        flags.set_image_load_stage(image.load_stage);
 
         let image_metadata = AuthManifestImageMetadata {
             fw_id: image.fw_id,
