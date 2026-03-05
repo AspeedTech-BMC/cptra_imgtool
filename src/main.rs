@@ -19,6 +19,7 @@ use std::path::PathBuf;
 use utility::PathBufExt;
 
 mod config;
+mod fw_toc;
 mod soc_man;
 mod utility;
 
@@ -190,13 +191,15 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let cfg = config::AspeedAuthManifestConfigFromFile::new(&path)?;
 
     /* To meet requirement: add FMC to SoC manifest but not in flash images list */
-    const MCU_RUN_TIME_FW_ID: u32 = 1;
+    unsafe {
+        config::MCU_RUN_TIME_FW_ID = 1;
+    }
     /* Run the caliptra flash image tool to create the flash image */
     let bl_list_args = std::iter::once("--soc-images")
         .chain(
             cfg.image_metadata_list
                 .iter()
-                .filter(|img| img.fw_id != MCU_RUN_TIME_FW_ID)
+                .filter(|img| img.fw_id != unsafe { config::MCU_RUN_TIME_FW_ID })
                 .map(|s| s.file.as_str()),
         )
         .collect::<Vec<_>>();
@@ -237,6 +240,9 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
 
     /* Wait for the process to exit */
     let _ = child.wait().expect("Failed to wait on child");
+
+    /* Create fw toc from flash image */
+    fw_toc::create_fw_toc_from_flash_image(&path, &cfg)?;
 
     if cptra_out_bundle {
         soc_man::combine_binaries_overwrite_manifest(

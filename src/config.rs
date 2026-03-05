@@ -29,6 +29,9 @@ use toml::Value;
 
 use crate::utility::PathBufExt;
 
+/* To meet requirement: add FMC to SoC manifest but not in flash images list */
+pub static mut MCU_RUN_TIME_FW_ID: u32 = 1;
+
 static GLOBAL_TMP_DIR: Lazy<TempDir> =
     Lazy::new(|| TempDir::new().expect("Failed to create global temp directory"));
 
