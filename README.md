@@ -47,6 +47,25 @@ In the following sections, we use the term **manifest bundle image** to refer to
 
 > **Note:** The manifest bundle image produced by this tool **does not** include the kernel FIT image, ROFS, or RWFS.
 
+## Upstream Source
+
+This project contains code derived from:
+
+- Project: chipsalliance/caliptra-sw
+- Path: auth-manifest
+- Upstream License: Apache License 2.0
+- Upstream Repository: https://github.com/chipsalliance/caliptra-sw
+- Upstream Commit: <879608b901cc60a68f4e52441e3c494605d08f35>
+
+### Modifications
+
+Modifications: <brief summary>
+
+### Sync Strategy
+
+This repository does not automatically track upstream updates.
+Security fixes and functional changes from upstream must be manually reviewed and ported if necessary.
+
 ## Output Manifest Bundle Image Example
 ### AST27xxA2 Platform
 

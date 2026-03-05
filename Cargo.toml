@@ -22,6 +22,9 @@ colored.workspace = true
 
 [workspace]
 members = [
+  "auth-manifest/app",
+  "auth-manifest/gen",
+  "auth-manifest/types",
 ]
 
 [workspace.dependencies]
@@ -40,3 +43,26 @@ tempfile = "=3.26.0"
 once_cell = "=1.21.3"
 memoffset = "=0.9.1"
 colored = "=2.2.0"
+chrono = "=0.4.44"
+bitflags = "=2.10.0"
+arbitrary = { version = "=1.4.2", features = ["derive"] }
+bitfield = "=0.14.0"
+zeroize = { version = "=1.8.2", default-features = false, features = ["zeroize_derive"] }
+openssl = { version = "=0.10.72", features = ["vendored"] }
+
+caliptra-auth-man-gen = {path = "auth-manifest/gen", default-features = false}
+caliptra-auth-man-types = {path = "auth-manifest/types", default-features = false}
+
+caliptra-drivers = {git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
+caliptra-error = {git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35", default-features = false}
+caliptra-image-crypto = {git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
+caliptra-image-elf = {git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
+caliptra-image-fake-keys = {git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
+caliptra-image-gen = {git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
+caliptra-image-serde = {git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
+caliptra-image-types = {git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35", default-features = false}
+caliptra-lms-types = {git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
+
+[patch.crates-io]
+# Fork of https://github.com/teythoon/rust-openssl.git/justus/pqc
+openssl = { git = "https://github.com/clundin25/rust-openssl.git", rev = "4ada1c1d7c264e052e7bb71ecddbd196a5c2a0c7" } # MLDSA
