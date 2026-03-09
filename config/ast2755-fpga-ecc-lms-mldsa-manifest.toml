@@ -52,8 +52,8 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -64,8 +64,8 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -76,8 +76,8 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -88,8 +88,8 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -100,8 +100,8 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -112,8 +112,8 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -124,8 +124,8 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -136,8 +136,8 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -148,8 +148,8 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -160,8 +160,8 @@ ignore_auth_check = false
 load_stage = 1
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_f000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -172,8 +172,8 @@ ignore_auth_check = false
 load_stage = 1
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_f008_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -184,8 +184,8 @@ ignore_auth_check = false
 load_stage = 1
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_c000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -193,11 +193,11 @@ file = "ssp.bin"
 source = 1
 fw_id = 0x100b
 ignore_auth_check = false
-load_stage = 1
+load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -205,11 +205,11 @@ file = "tsp.bin"
 source = 1
 fw_id = 0x100c
 ignore_auth_check = false
-load_stage = 1
+load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
@@ -217,9 +217,9 @@ file = "zephyr-mcu-runtime.bin"
 source = 1
 fw_id = 0x100d
 ignore_auth_check = false
-load_stage = 1
+load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
-image_staging_address = 0x0000000000000000
+image_load_address = 0x0000_0000_0000_0000
+image_staging_address = 0x0000_0000_0000_0000
 classification = 0
