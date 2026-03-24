@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use utility::PathBufExt;
 
 mod config;
-mod fw_toc;
+mod fw_toc_1x;
 mod soc_man;
 mod utility;
 
@@ -359,7 +359,7 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let _ = child.wait().expect("Failed to wait on child");
 
     /* Create fw toc from flash image */
-    fw_toc::create_fw_toc_from_flash_image(&path, &cfg)?;
+    fw_toc_1x::create_fw_toc_from_flash_image(&path, &cfg)?;
 
     if cptra_out_bundle {
         soc_man::combine_binaries_overwrite_manifest(

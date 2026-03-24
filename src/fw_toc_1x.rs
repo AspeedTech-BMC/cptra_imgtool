@@ -26,14 +26,14 @@ use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 use zerocopy::{FromBytes, Immutable, IntoBytes};
 
-// pub const FLASH_HEADER_MAGIC: u32 = 0x48534C46; // "FLSH"
-pub const TOC_HEADER_MAGIC: u32 = 0x434F5441; // "ATOC"
-pub const IMAGE_COUNT: usize = 32;
-pub const FILENAME_LEN: usize = 64;
+// const FLASH_HEADER_MAGIC: u32 = 0x48534C46; // "FLSH"
+const TOC_HEADER_MAGIC: u32 = 0x434F5441; // "ATOC"
+const IMAGE_COUNT: usize = 32;
+const FILENAME_LEN: usize = 64;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, FromBytes, IntoBytes, Immutable)]
-pub struct FlashHeader {
+struct FlashHeader {
     pub magic: u32,
     pub version: u16,
     pub image_count: u16,
@@ -43,7 +43,7 @@ pub struct FlashHeader {
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, FromBytes, IntoBytes, Immutable)]
-pub struct ImageHeader {
+struct ImageHeader {
     pub identifier: u32,
     pub offset: u32,
     pub size: u32,
@@ -51,7 +51,7 @@ pub struct ImageHeader {
 
 #[repr(C)]
 #[derive(Debug)]
-pub struct FlashImagePayload {
+struct FlashImagePayload {
     pub image_info: [ImageHeader; IMAGE_COUNT],
     pub filenames: [[u8; FILENAME_LEN]; IMAGE_COUNT],
 }
@@ -59,7 +59,7 @@ pub struct FlashImagePayload {
 #[repr(C)]
 #[derive(Debug)]
 #[allow(dead_code)]
-pub struct FirmwareTOC {
+struct FirmwareTOC {
     pub header: FlashHeader,
     pub payload: FlashImagePayload,
 }
