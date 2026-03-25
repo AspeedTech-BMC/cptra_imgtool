@@ -254,7 +254,7 @@ pub(crate) fn run_auth_man_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
     debug!("key_dir_to_auth_manifest_tool: {:#?}", key_dir.display());
 
     /* Run the caliptra manifest tool to create the manifest */
-    let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
+    let cmd = path.tool_dir.join("caliptra-auth-manifest-app-2x");
     config::check_path_exists(cmd.as_path())?;
 
     let mut child = std::process::Command::new(cmd)
@@ -415,7 +415,7 @@ pub(crate) fn run_auth_flash_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
         .collect::<Vec<_>>();
     debug!("Caliptra flash image tool args: {:#?}", bl_list_args);
 
-    let cmd = path.tool_dir.join("xtask");
+    let cmd = path.tool_dir.join("xtask-2x");
     config::check_path_exists(cmd.as_path())?;
 
     let mut child = std::process::Command::new(cmd)

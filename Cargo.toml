@@ -22,9 +22,9 @@ colored.workspace = true
 
 [workspace]
 members = [
-  "auth-manifest/app",
-  "auth-manifest/gen",
-  "auth-manifest/types",
+  "tools/cptra_2x/auth-manifest/app",
+  "tools/cptra_2x/auth-manifest/gen",
+  "tools/cptra_2x/auth-manifest/types",
 ]
 
 [workspace.dependencies]
@@ -50,8 +50,8 @@ bitfield = "=0.14.0"
 zeroize = { version = "=1.8.2", default-features = false, features = ["zeroize_derive"] }
 openssl = { version = "=0.10.72", features = ["vendored"] }
 
-caliptra-auth-man-gen = {path = "auth-manifest/gen", default-features = false}
-caliptra-auth-man-types = {path = "auth-manifest/types", default-features = false}
+caliptra-auth-man-gen = {path = "tools/cptra_2x/auth-manifest/gen", default-features = false}
+caliptra-auth-man-types = {path = "tools/cptra_2x/auth-manifest/types", default-features = false}
 
 caliptra-drivers = {git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
 caliptra-error = {git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35", default-features = false}

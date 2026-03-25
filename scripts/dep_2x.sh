@@ -4,9 +4,21 @@ YELLOW='\033[0;33m'
 END='\033[0m'
 
 DIR="$(dirname "$(realpath "$0")")"
-CPTRA_TOOLS_DIR="$DIR/.."
-CPTRA_MCU_SW_DIR="$CPTRA_TOOLS_DIR/caliptra-mcu-sw"
-CPTRA_TARGET_DIR=$CPTRA_TOOLS_DIR/target
+CPTRA_IMGTOOL_DIR="$DIR/.."
+AUTH_FLASH_TOOLS_DIR="$CPTRA_IMGTOOL_DIR/tools/cptra_2x"
+# AUTH_TOOL_DIR="$AUTH_FLASH_TOOLS_DIR/caliptra-sw"
+FLASH_TOOL_DIR="$AUTH_FLASH_TOOLS_DIR/caliptra-mcu-sw"
+CPTRA_TARGET_DIR=$CPTRA_IMGTOOL_DIR/target
+CPTRA_AUTH_FLASH_TOOL_TARGET_DIR=$CPTRA_IMGTOOL_DIR/target/tools/cptra_2x
+
+# echo $DIR
+# echo $CPTRA_IMGTOOL_DIR
+# echo $AUTH_FLASH_TOOLS_DIR
+# # echo $AUTH_TOOL_DIR
+# echo $FLASH_TOOL_DIR
+# echo $CPTRA_TARGET_DIR
+# echo $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR
+
 
 function cptra_printf() {
     echo -e "${YELLOW}[CPTRA]${END} $1"
@@ -15,22 +27,28 @@ function cptra_printf() {
 pushd .
 
 # Get caliptra-mcu-sw repository
-if [ ! -d $CPTRA_MCU_SW_DIR ]; then
+if [ ! -d $FLASH_TOOL_DIR ]; then
     cptra_printf "Cloning caliptra-mcu-sw repository..."
-    git clone https://github.com/chipsalliance/caliptra-mcu-sw.git $CPTRA_MCU_SW_DIR
-    cd $CPTRA_MCU_SW_DIR && git checkout main-2.1
+    git clone https://github.com/chipsalliance/caliptra-mcu-sw.git $FLASH_TOOL_DIR
+    cd $FLASH_TOOL_DIR && git checkout main-2.1
 else
     cptra_printf "Caliptra-mcu-sw repository already exists."
 fi
 
+if [ ! -d "$CPTRA_TARGET_DIR/debug" ]; then
+    mkdir -p "$CPTRA_TARGET_DIR/debug"
+fi
+
 # Build the auth-manifest tool
 cptra_printf "Building auth-manifest tool..."
-cd $CPTRA_TOOLS_DIR
-cargo build -p caliptra-auth-manifest-app
+cd $CPTRA_IMGTOOL_DIR
+cargo build -p caliptra-auth-manifest-app --target-dir $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR
+cp $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR/debug/caliptra-auth-manifest-app $CPTRA_TARGET_DIR/debug/caliptra-auth-manifest-app-2x
 
 # Build caliptra-mcu-sw tool
 cptra_printf "Building caliptra-mcu-sw tool..."
-cd $CPTRA_MCU_SW_DIR
-cargo build -p xtask --target-dir $CPTRA_TARGET_DIR
+cd $FLASH_TOOL_DIR
+cargo build -p xtask --target-dir $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR
+cp $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR/debug/xtask $CPTRA_TARGET_DIR/debug/xtask-2x
 
 popd
