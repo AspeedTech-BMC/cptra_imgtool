@@ -40,6 +40,7 @@ source = 1
 fw_id = 1
 ignore_auth_check = false
 load_stage = 0
+svn = 1
 
 [[image_metadata_list]]
 file = "ddr4_pmu_train_imem.bin"

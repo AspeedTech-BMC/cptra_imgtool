@@ -69,6 +69,8 @@ pub(crate) struct ImageMetadataConfigFromFile {
 
     pub load_stage: u32,
 
+    pub svn: Option<u8>,
+
     pub exec_bit: Option<u32>,
 
     pub component_id: Option<u32>,
@@ -138,6 +140,8 @@ pub(crate) struct AspeedImageMetadataConfigFromFile {
     pub ignore_auth_check: bool,
 
     pub load_stage: u32,
+
+    pub svn: Option<u8>,
 
     pub exec_bit: Option<u32>,
 
@@ -497,6 +501,7 @@ impl AspeedAuthManifestConfigFromFile {
                     fw_id: img.fw_id,
                     ignore_auth_check: img.ignore_auth_check,
                     load_stage: img.load_stage,
+                    svn: img.svn,
                     exec_bit: img.exec_bit,
                     component_id: img.component_id,
                     image_load_address: img.image_load_address,
