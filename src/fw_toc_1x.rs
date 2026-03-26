@@ -29,7 +29,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes};
 // const FLASH_HEADER_MAGIC: u32 = 0x48534C46; // "FLSH"
 const TOC_HEADER_MAGIC: u32 = 0x434F5441; // "ATOC"
 const IMAGE_COUNT: usize = 32;
-const FILENAME_LEN: usize = 64;
+const FILENAME_LEN: usize = 256;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, FromBytes, IntoBytes, Immutable)]
