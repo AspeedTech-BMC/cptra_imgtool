@@ -24,6 +24,11 @@ mod fw_toc_1x;
 mod soc_man;
 mod utility;
 
+const AUTH_MANIFEST_TOOL_1X: &str = "caliptra-auth-manifest-app";
+const AUTH_MANIFEST_TOOL_2X: &str = "caliptra-auth-manifest-app-2x";
+const FLASH_TOOL_1X: &str = "xtask";
+const FLASH_TOOL_2X: &str = "xtask-2x";
+
 fn main() {
     let sub_cmds = vec![
         Command::new("create-auth-man")
@@ -157,38 +162,42 @@ fn main() {
     result.unwrap();
 }
 
+fn print_separator() {
+    println!("------------------------------------------------------------------------------------------------------------------------------------------------");
+}
+
 pub(crate) fn show_important_cfg_path(cfg: &config::AspeedManifestCreationPath) {
-    println!("-----------------------------------------------------------------------------------------------------------");
-    println!("prebuilt_dir : {}", cfg.prebuilt_dir.display());
+    print_separator();
+    println!("prebuilt_dir:   {}", cfg.prebuilt_dir.display());
     println!(
-        "key_dir : {}",
+        "key_dir:        {}",
         cfg.key_dir
             .as_ref()
             .map(|p| p.display().to_string())
             .unwrap_or_else(|| "<None>".to_string())
     );
     println!(
-        "svn_sig : {}",
+        "svn_sig:        {}",
         cfg.svn_sig
             .as_ref()
             .map(|p| p.display().to_string())
             .unwrap_or_else(|| "<None>".to_string())
     );
     println!(
-        "manifest : {}",
+        "manifest:       {}",
         cfg.manifest
             .as_ref()
             .map(|p| p.display().to_string())
             .unwrap_or_else(|| "<None>".to_string())
     );
     println!(
-        "caliptra_cfg : {}",
+        "caliptra_cfg:   {}",
         cfg.caliptra_cfg
             .as_ref()
             .map(|p| p.display().to_string())
             .unwrap_or_else(|| "<None>".to_string())
     );
-    println!("-----------------------------------------------------------------------------------------------------------");
+    print_separator();
 }
 
 pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
@@ -206,7 +215,8 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     debug!("key_dir_to_auth_manifest_tool: {:#?}", key_dir.display());
 
     /* Run the caliptra manifest tool to create the manifest */
-    let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
+    let cmd = path.tool_dir.join(AUTH_MANIFEST_TOOL_1X);
+    println!("Manifest tool:  {}", cmd.display());
     config::check_path_exists(cmd.as_path())?;
 
     let mut child = std::process::Command::new(cmd)
@@ -254,7 +264,8 @@ pub(crate) fn run_auth_man_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
     debug!("key_dir_to_auth_manifest_tool: {:#?}", key_dir.display());
 
     /* Run the caliptra manifest tool to create the manifest */
-    let cmd = path.tool_dir.join("caliptra-auth-manifest-app-2x");
+    let cmd = path.tool_dir.join(AUTH_MANIFEST_TOOL_2X);
+    println!("Manifest tool:  {}", cmd.display());
     config::check_path_exists(cmd.as_path())?;
 
     let mut child = std::process::Command::new(cmd)
@@ -306,6 +317,7 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     /* If the user didn't specify the prebuild manifest, create it. */
     if !args.contains_id("man") {
         run_auth_man_cmd(args)?;
+        print_separator();
     }
 
     /* Get the aspeed configuration */
@@ -326,7 +338,8 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
         .collect::<Vec<_>>();
     debug!("Caliptra flash image tool args: {:#?}", bl_list_args);
 
-    let cmd = path.tool_dir.join("xtask");
+    let cmd = path.tool_dir.join(FLASH_TOOL_1X);
+    println!("Flash tool:     {}", cmd.display());
     config::check_path_exists(cmd.as_path())?;
 
     let cptra_out_bundle = cfg.image_runtime_list.cptra_out_bundle.unwrap_or(false);
@@ -382,6 +395,7 @@ pub(crate) fn run_auth_flash_cmd(args: &ArgMatches) -> anyhow::Result<()> {
             path.flash_image.to_string()
         );
     }
+    print_separator();
 
     Ok(())
 }
@@ -394,6 +408,7 @@ pub(crate) fn run_auth_flash_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
     /* If the user didn't specify the prebuild manifest, create it. */
     if !args.contains_id("man") {
         run_auth_man_cmd_2x(args)?;
+        print_separator();
     }
 
     /* Get the aspeed configuration */
@@ -415,7 +430,8 @@ pub(crate) fn run_auth_flash_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
         .collect::<Vec<_>>();
     debug!("Caliptra flash image tool args: {:#?}", bl_list_args);
 
-    let cmd = path.tool_dir.join("xtask-2x");
+    let cmd = path.tool_dir.join(FLASH_TOOL_2X);
+    println!("Flash tool:     {}", cmd.display());
     config::check_path_exists(cmd.as_path())?;
 
     let mut child = std::process::Command::new(cmd)
@@ -439,7 +455,14 @@ pub(crate) fn run_auth_flash_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
     let _ = child.wait().expect("Failed to wait on child");
 
     /* Create fw toc from flash image */
-    fw_toc::create_fw_toc_from_flash_image(path, &cfg)?;
+    fw_toc::create_fw_toc_from_flash_image(&path, &cfg)?;
+
+    println!(
+        "Created Caliptra flash image: {}",
+        path.flash_image.to_string()
+    );
+
+    print_separator();
 
     Ok(())
 }

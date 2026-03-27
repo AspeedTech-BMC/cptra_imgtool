@@ -216,7 +216,7 @@ pub fn padding_file<P: AsRef<Path>>(path: P, padding_align_size: u64) -> std::io
     let size_after = size_before + padding;
 
     println!(
-        "File {:?}: size before padding = {} bytes, after padding = {} bytes (padded {} bytes, align = {} bytes)",
+        "File            {:?}: size after padding: {} -> {} bytes (padded {} bytes, align = {} bytes)",
         path.as_ref(),
         size_before,
         size_after,

@@ -29,8 +29,8 @@ pushd .
 # Get caliptra-mcu-sw repository
 if [ ! -d $FLASH_TOOL_DIR ]; then
     cptra_printf "Cloning caliptra-mcu-sw repository..."
-    git clone https://github.com/chipsalliance/caliptra-mcu-sw.git $FLASH_TOOL_DIR
-    cd $FLASH_TOOL_DIR && git checkout main-2.1
+    git clone ssh://gerrit.aspeed.com:29418/caliptra-mcu-sw $FLASH_TOOL_DIR
+    cd $FLASH_TOOL_DIR && git checkout aspeed-dev-2.1
 else
     cptra_printf "Caliptra-mcu-sw repository already exists."
 fi

@@ -147,7 +147,7 @@ fn cstr_from_buf(buf: &[u8]) -> &str {
 }
 
 pub fn create_fw_toc_from_flash_image(
-    path: config::AspeedManifestCreationPath,
+    path: &config::AspeedManifestCreationPath,
     cfg: &config::AspeedAuthManifestConfigFromFile,
 ) -> Result<()> {
     // Build a FirmwareTOC from an existing flash image and provided config
@@ -249,7 +249,7 @@ pub fn create_fw_toc_from_flash_image(
     }
     max_name_chars = max_name_chars + 1;
 
-    println!("=== ImageHeaders ===");
+    println!("================================================================= ImageHeaders =================================================================");
     for i in 0..img_count {
         let name = cstr_from_buf(&payload.filenames[i]);
 
