@@ -2,6 +2,8 @@
 
 Licensed under the Apache-2.0 license.
 
+Modified by ASPEED Technology Inc., 2026-04-15: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest generation tool.
+
 File Name:
 
    generator.rs
@@ -15,10 +17,10 @@ mod generator;
 
 pub mod default_test_manifest;
 
-use caliptra_image_types::FwVerificationPqcKeyType;
+use caliptra_image_types_2x::FwVerificationPqcKeyType;
 pub use generator::AuthManifestGenerator;
 
-use caliptra_auth_man_types::*;
+use caliptra_auth_man_types_2x::*;
 
 /// Image Generator Vendor Configuration
 #[derive(Default, Clone)]

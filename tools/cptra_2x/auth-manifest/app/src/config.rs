@@ -3,6 +3,7 @@
 Licensed under the Apache-2.0 license.
 
 Modified by ASPEED Technology Inc., 2026-03-05: Add load stage field support in manifest flags.
+Modified by ASPEED Technology Inc., 2026-04-15: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest generation tool.
 
 File Name:
 
@@ -15,17 +16,17 @@ Abstract:
 --*/
 
 use anyhow::Context;
-use caliptra_auth_man_gen::AuthManifestGeneratorKeyConfig;
-use caliptra_auth_man_types::ImageMetadataFlags;
-use caliptra_auth_man_types::{
+use caliptra_auth_man_gen_2x::AuthManifestGeneratorKeyConfig;
+use caliptra_auth_man_types_2x::ImageMetadataFlags;
+use caliptra_auth_man_types_2x::{
     Addr64, AuthManifestImageMetadata, AuthManifestPrivKeysConfig, AuthManifestPubKeysConfig,
 };
 #[cfg(feature = "openssl")]
-use caliptra_image_crypto::OsslCrypto as Crypto;
+use caliptra_image_crypto_2x::OsslCrypto as Crypto;
 #[cfg(feature = "rustcrypto")]
-use caliptra_image_crypto::RustCrypto as Crypto;
-use caliptra_image_crypto::{lms_priv_key_from_pem, lms_pub_key_from_pem};
-use caliptra_image_gen::*;
+use caliptra_image_crypto_2x::RustCrypto as Crypto;
+use caliptra_image_crypto_2x::{lms_priv_key_from_pem, lms_pub_key_from_pem};
+use caliptra_image_gen_2x::*;
 use serde_derive::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 

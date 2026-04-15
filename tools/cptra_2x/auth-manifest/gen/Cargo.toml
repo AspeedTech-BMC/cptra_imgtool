@@ -1,9 +1,11 @@
 # Licensed under the Apache-2.0 license.
 
+# Modified by ASPEED Technology Inc., 2026-04-15: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest generation tool.
+
 [package]
-name = "caliptra-auth-man-gen"
-version = "0.1.0"
 edition = "2021"
+name = "caliptra-auth-man-gen-2x"
+version = "0.1.0"
 
 [lib]
 doctest = false
@@ -11,10 +13,10 @@ doctest = false
 [dependencies]
 anyhow.workspace = true
 bitflags.workspace = true
-caliptra-image-types = { workspace = true, features = ["std"] }
-caliptra-image-gen.workspace = true
-caliptra-image-fake-keys.workspace = true
-caliptra-auth-man-types = { workspace = true, features = ["std"] }
-caliptra-lms-types.workspace = true
+caliptra-auth-man-types-2x = {workspace = true, features = ["std"]}
+caliptra-image-fake-keys-2x.workspace = true
+caliptra-image-gen-2x.workspace = true
+caliptra-image-types-2x = {workspace = true, features = ["std"]}
+caliptra-lms-types-2x.workspace = true
 memoffset.workspace = true
 zerocopy.workspace = true

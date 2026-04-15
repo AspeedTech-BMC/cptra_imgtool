@@ -3,6 +3,7 @@
 Licensed under the Apache-2.0 license.
 
 Modified by ASPEED Technology Inc., 2026-03-05: Add load stage field support in manifest flags.
+Modified by ASPEED Technology Inc., 2026-04-15: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest generation tool.
 
 File Name:
 
@@ -17,7 +18,7 @@ Abstract:
 #![no_std]
 
 use bitfield::bitfield;
-use caliptra_image_types::*;
+use caliptra_image_types_2x::*;
 use core::default::Default;
 use core::ops::Range;
 use memoffset::span_of;

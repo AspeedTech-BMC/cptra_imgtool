@@ -2,6 +2,8 @@
 
 Licensed under the Apache-2.0 license.
 
+Modified by ASPEED Technology Inc., 2026-04-15: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest generation tool.
+
 File Name:
 
    generator.rs
@@ -12,7 +14,7 @@ Abstract:
 
 --*/
 
-use caliptra_image_gen::ImageGeneratorCrypto;
+use caliptra_image_gen_2x::ImageGeneratorCrypto;
 use zerocopy::IntoBytes;
 
 use crate::*;

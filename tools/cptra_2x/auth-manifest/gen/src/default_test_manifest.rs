@@ -1,13 +1,15 @@
 // Licensed under the Apache-2.0 license
 
+// Modified by ASPEED Technology Inc., 2026-04-15: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest generation tool.
+
 use crate::{AuthManifestGenerator, AuthManifestGeneratorConfig, AuthManifestGeneratorKeyConfig};
-use caliptra_auth_man_types::{
+use caliptra_auth_man_types_2x::{
     AuthManifestFlags, AuthManifestImageMetadata, AuthManifestPrivKeysConfig,
     AuthManifestPubKeysConfig, AuthorizationManifest, ImageMetadataFlags,
 };
-use caliptra_image_fake_keys::*;
-use caliptra_image_gen::{from_hw_format, ImageGeneratorCrypto};
-use caliptra_image_types::FwVerificationPqcKeyType;
+use caliptra_image_fake_keys_2x::*;
+use caliptra_image_gen_2x::{from_hw_format, ImageGeneratorCrypto};
+use caliptra_image_types_2x::FwVerificationPqcKeyType;
 
 // Default test MCU firmware used for subsystem mode uploads
 pub static DEFAULT_MCU_FW: [u8; 256] = [

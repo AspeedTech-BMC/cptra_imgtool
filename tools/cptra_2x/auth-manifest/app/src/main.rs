@@ -2,6 +2,8 @@
 
 Licensed under the Apache-2.0 license.
 
+Modified by ASPEED Technology Inc., 2026-04-15: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest generation tool.
+
 File Name:
 
    main.rs
@@ -13,13 +15,13 @@ Abstract:
 --*/
 
 use anyhow::Context;
-use caliptra_auth_man_gen::{AuthManifestGenerator, AuthManifestGeneratorConfig};
-use caliptra_auth_man_types::AuthManifestFlags;
+use caliptra_auth_man_gen_2x::{AuthManifestGenerator, AuthManifestGeneratorConfig};
+use caliptra_auth_man_types_2x::AuthManifestFlags;
 #[cfg(feature = "openssl")]
-use caliptra_image_crypto::OsslCrypto as Crypto;
+use caliptra_image_crypto_2x::OsslCrypto as Crypto;
 #[cfg(feature = "rustcrypto")]
-use caliptra_image_crypto::RustCrypto as Crypto;
-use caliptra_image_types::FwVerificationPqcKeyType;
+use caliptra_image_crypto_2x::RustCrypto as Crypto;
+use caliptra_image_types_2x::FwVerificationPqcKeyType;
 use clap::ArgMatches;
 use clap::{arg, value_parser, Command};
 use std::io::Write;
