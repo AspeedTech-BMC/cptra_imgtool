@@ -239,10 +239,17 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     /* Wait for the process to exit */
     let _ = child.wait().expect("Failed to wait on child");
 
+    let overrides_presigned_key_and_signature = cfg
+        .manifest_config
+        .manifest_overrides_presigned_key_and_signature
+        .unwrap_or(true);
+
     /* Post-Processing to meet aspeed proprietary feature */
     let mut soc_man = soc_man::AspeedAuthorizationManifest::new(&path.manifest.unwrap_or_err());
-    soc_man.modify_vnd_ecc_sig()?;
-    soc_man.modify_vnd_lms_sig()?;
+    if overrides_presigned_key_and_signature {
+        soc_man.modify_vnd_ecc_sig()?;
+        soc_man.modify_vnd_lms_sig()?;
+    }
     soc_man.insert_security_version(&path, &cfg, &key_dir);
     soc_man.close();
 

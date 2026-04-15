@@ -116,6 +116,8 @@ pub(crate) struct AspeedAuthManifestGeneralConfigFromFile {
     pub padding_align_size: Option<u32>,
 
     pub padding_out_folder: Option<String>,
+
+    pub manifest_overrides_presigned_key_and_signature: Option<bool>,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug)]
