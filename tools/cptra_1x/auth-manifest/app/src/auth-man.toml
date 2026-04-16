@@ -1,6 +1,7 @@
 # Licensed under the Apache-2.0 license
 
 # Modified by ASPEED Technology Inc., 2026-04-16: Support load stage filed in manifest flags
+# Modified by ASPEED Technology Inc., 2026-04-16: Ime flag support svn
 
 [vendor_fw_key_config]
 ecc_pub_key = "vnd-pub-key-3.pem"
@@ -32,6 +33,7 @@ source = 1
 fw_id = 1
 ignore_auth_check = false
 load_stage = 1
+svn = 0
 
 [[image_metadata_list]]
 digest = "99514329186b2f6ae4a1329e7ee6c610a729636335174ac6b740f9028396fcc803d0e93863a7c3d90f86beee782f4f3f"
@@ -39,6 +41,7 @@ source = 2
 fw_id = 2
 ignore_auth_check = true
 load_stage = 1
+svn = 0
 
 [[image_metadata_list]]
 digest = "9B514329186b2f6ae4a1329e7ee6c610a729636335174ac6b740f9028396fcc803d0e93863a7c3d90f86beee782f4f3f"
@@ -46,3 +49,4 @@ source = 2
 fw_id = 3
 ignore_auth_check = false
 load_stage = 1
+svn = 0

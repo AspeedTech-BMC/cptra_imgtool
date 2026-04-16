@@ -4,6 +4,7 @@ Licensed under the Apache-2.0 license.
 
 Modified by ASPEED Technology Inc., 2026-04-16: Support generate anti-rollback signature
 Modified by ASPEED Technology Inc., 2026-04-16: Support load stage filed in manifest flags
+Modified by ASPEED Technology Inc., 2026-04-16: Ime flag support svn
 
 File Name:
 
@@ -137,6 +138,7 @@ bitfield! {
     pub struct ImageMetadataFlags(u32);
     pub image_source, set_image_source: 1, 0;
     pub ignore_auth_check, set_ignore_auth_check: 2;
+    pub svn, set_svn: 23, 16;
     pub load_stage, set_image_load_stage: 31, 30;
 }
 

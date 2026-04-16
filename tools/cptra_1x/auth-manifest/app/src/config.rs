@@ -5,6 +5,7 @@ Licensed under the Apache-2.0 license.
 Modified by ASPEED Technology Inc., 2026-04-16: Support load stage filed in manifest flags
 Modified by ASPEED Technology Inc., 2026-04-16: Make the auth manifest tool more flexible to support different signature combinations
 Modified by ASPEED Technology Inc., 2026-04-16: Support sign helper config input
+Modified by ASPEED Technology Inc., 2026-04-16: Ime flag support svn
 
 File Name:
 
@@ -63,6 +64,7 @@ pub struct ImageMetadataConfigFromFile {
     source: u32,
     fw_id: u32,
     ignore_auth_check: bool,
+    svn: Option<u8>,
     load_stage: u32,
 }
 
@@ -185,6 +187,9 @@ pub(crate) fn image_metadata_config_from_file(
         let mut flags = ImageMetadataFlags(0);
         flags.set_ignore_auth_check(image.ignore_auth_check);
         flags.set_image_source(image.source);
+        if let Some(svn) = image.svn {
+            flags.set_svn(svn as u32);
+        }
         flags.set_image_load_stage(image.load_stage);
 
         let image_metadata = AuthManifestImageMetadata {
