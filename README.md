@@ -53,14 +53,23 @@ In the following sections, we use the term **manifest bundle image** to refer to
 This project contains code derived from:
 
 - Project: chipsalliance/caliptra-sw
-- Path: tools/cptra_2x/auth-manifest
-- Upstream License: Apache License 2.0
-- Upstream Repository: https://github.com/chipsalliance/caliptra-sw
-- Upstream Commit: <879608b901cc60a68f4e52441e3c494605d08f35>
+- Name: auth-manifest
+  - Path: tools/cptra_1x/auth-manifest
+  - Upstream License: Apache License 2.0
+  - Upstream Repository: https://github.com/chipsalliance/caliptra-sw
+  - Upstream Commit: <951209a31c4373658f89e4b1211f3a557731c7d9>
+- Name: auth-manifest-2x
+  - Path: tools/cptra_2x/auth-manifest
+  - Upstream License: Apache License 2.0
+  - Upstream Repository: https://github.com/chipsalliance/caliptra-sw
+  - Upstream Commit: <879608b901cc60a68f4e52441e3c494605d08f35>
 
 ### Modifications
+#### tools/cptra_1x/auth-manifest
+
 #### tools/cptra_2x/auth-manifest
 2026-03-05: Add load stage field support in manifest flags.
+2026-04-15: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest generation tool.
 
 
 ### Sync Strategy
