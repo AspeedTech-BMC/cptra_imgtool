@@ -1,9 +1,11 @@
 # Licensed under the Apache-2.0 license.
 
+# Modified by ASPEED Technology Inc., 2026-04-16: Support sign helper config input
+
 [package]
+edition = "2021"
 name = "caliptra-auth-man-gen"
 version = "0.1.0"
-edition = "2021"
 
 [lib]
 doctest = false
@@ -11,9 +13,16 @@ doctest = false
 [dependencies]
 anyhow.workspace = true
 bitflags.workspace = true
-caliptra-image-types = { workspace = true, features = ["std"] }
+caliptra-auth-man-types = {workspace = true, features = ["std"]}
 caliptra-image-gen.workspace = true
-caliptra-auth-man-types = { workspace = true, features = ["std"] }
+caliptra-image-types = {workspace = true, features = ["std"]}
 caliptra-lms-types.workspace = true
+hex.workspace = true
 memoffset.workspace = true
+num-bigint.workspace = true
+serde.workspace = true
+serde_derive.workspace = true
+simple_asn1.workspace = true
+tempfile.workspace = true
+time.workspace = true
 zerocopy.workspace = true

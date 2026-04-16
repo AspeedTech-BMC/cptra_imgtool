@@ -4,6 +4,7 @@ Licensed under the Apache-2.0 license.
 
 Modified by ASPEED Technology Inc., 2026-04-16: Support generate anti-rollback signature
 Modified by ASPEED Technology Inc., 2026-04-16: Make the auth manifest tool more flexible to support different signature combinations
+Modified by ASPEED Technology Inc., 2026-04-16: Support sign helper config input
 
 File Name:
 
@@ -259,7 +260,16 @@ pub(crate) fn run_aspeed_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
             &config.owner_fw_key_config,
             &config.owner_man_key_config,
         )?,
+        owner_ecc_key_optional_config: config::ecc_key_optional_config_from_file(
+            key_dir,
+            &config.owner_man_key_config,
+        )?,
+        owner_lms_key_optional_config: config::lms_key_optional_config_from_file(
+            key_dir,
+            &config.owner_man_key_config,
+        )?,
         image_metadata_list: config::image_metadata_config_from_file(&config.image_metadata_list)?,
+        sign_helper: config.sign_helper.clone().unwrap_or_default(),
     };
 
     let gen = AuthManifestGenerator::new(Crypto::default());
@@ -339,7 +349,16 @@ pub(crate) fn run_sig_svn_cmd(args: &ArgMatches) -> anyhow::Result<()> {
             &config.owner_fw_key_config,
             &config.owner_man_key_config,
         )?,
+        owner_ecc_key_optional_config: config::ecc_key_optional_config_from_file(
+            key_dir,
+            &config.owner_man_key_config,
+        )?,
+        owner_lms_key_optional_config: config::lms_key_optional_config_from_file(
+            key_dir,
+            &config.owner_man_key_config,
+        )?,
         image_metadata_list: config::image_metadata_config_from_file(&config.image_metadata_list)?,
+        sign_helper: config.sign_helper.clone().unwrap_or_default(),
     };
 
     let gen = AuthManifestGenerator::new(Crypto::default());

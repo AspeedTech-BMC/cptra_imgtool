@@ -69,6 +69,7 @@ This project contains code derived from:
 2026-04-16: Support generate anti-rollback signature
 2026-04-16: Support load stage filed in manifest flags
 2026-04-16: Make the auth manifest tool more flexible to support different signature combinations
+2026-04-16: Support sign helper config input
 
 #### tools/cptra_2x/auth-manifest
 2026-03-05: Add load stage field support in manifest flags.
