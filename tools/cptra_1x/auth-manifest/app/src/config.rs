@@ -3,6 +3,7 @@
 Licensed under the Apache-2.0 license.
 
 Modified by ASPEED Technology Inc., 2026-04-16: Support load stage filed in manifest flags
+Modified by ASPEED Technology Inc., 2026-04-16: Make the auth manifest tool more flexible to support different signature combinations
 
 File Name:
 
@@ -15,7 +16,10 @@ Abstract:
 --*/
 
 use anyhow::Context;
-use caliptra_auth_man_gen::AuthManifestGeneratorKeyConfig;
+use caliptra_auth_man_gen::{
+    AuthManifestECCKeyPair, AuthManifestGeneratorEccKeyConfig, AuthManifestGeneratorKeyConfig,
+    AuthManifestGeneratorLmsKeyConfig, AuthManifestLmsKeyPair,
+};
 use caliptra_auth_man_types::{AuthManifestImageMetadata, AuthManifestPrivKeys};
 use caliptra_auth_man_types::{AuthManifestPubKeys, ImageMetadataFlags};
 #[cfg(feature = "openssl")]
@@ -35,6 +39,17 @@ pub(crate) struct AuthManifestKeyConfigFromFile {
     pub ecc_priv_key: Option<String>,
 
     pub lms_pub_key: String,
+
+    pub lms_priv_key: Option<String>,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub(crate) struct AspeedAuthManifestKeyConfigFromFile {
+    pub ecc_pub_key: Option<String>,
+
+    pub ecc_priv_key: Option<String>,
+
+    pub lms_pub_key: Option<String>,
 
     pub lms_priv_key: Option<String>,
 }
@@ -62,6 +77,19 @@ pub(crate) struct AuthManifestConfigFromFile {
     pub image_metadata_list: Vec<ImageMetadataConfigFromFile>,
 }
 
+#[derive(Default, Serialize, Deserialize)]
+pub(crate) struct AspeedAuthManifestConfigFromFile {
+    pub vendor_fw_key_config: Option<AspeedAuthManifestKeyConfigFromFile>,
+
+    pub vendor_man_key_config: Option<AspeedAuthManifestKeyConfigFromFile>,
+
+    pub owner_fw_key_config: Option<AspeedAuthManifestKeyConfigFromFile>,
+
+    pub owner_man_key_config: Option<AspeedAuthManifestKeyConfigFromFile>,
+
+    pub image_metadata_list: Vec<ImageMetadataConfigFromFile>,
+}
+
 /// Load Authorization Manifest Key Configuration from file
 pub(crate) fn load_auth_man_config_from_file(
     path: &PathBuf,
@@ -70,6 +98,18 @@ pub(crate) fn load_auth_man_config_from_file(
         .with_context(|| format!("Failed to read the config file {}", path.display()))?;
 
     let config: AuthManifestConfigFromFile = toml::from_str(&config_str)
+        .with_context(|| format!("Failed to parse the config file {}", path.display()))?;
+
+    Ok(config)
+}
+
+pub(crate) fn load_aspeed_auth_man_config_from_file(
+    path: &PathBuf,
+) -> anyhow::Result<AspeedAuthManifestConfigFromFile> {
+    let config_str = std::fs::read_to_string(path)
+        .with_context(|| format!("Failed to read the config file {}", path.display()))?;
+
+    let config: AspeedAuthManifestConfigFromFile = toml::from_str(&config_str)
         .with_context(|| format!("Failed to parse the config file {}", path.display()))?;
 
     Ok(config)
@@ -152,4 +192,89 @@ pub(crate) fn image_metadata_config_from_file(
     }
 
     Ok(image_metadata_list)
+}
+
+pub(crate) fn ecc_key_config_from_file(
+    path: &Path,
+    fw_config: &Option<AspeedAuthManifestKeyConfigFromFile>,
+    man_config: &Option<AspeedAuthManifestKeyConfigFromFile>,
+) -> anyhow::Result<Option<AuthManifestGeneratorEccKeyConfig>> {
+    if let (Some(fw_config), Some(man_config)) = (fw_config, man_config) {
+        if let (
+            Some(fw_ecc_pub_key),
+            Some(fw_ecc_priv_key),
+            Some(man_ecc_pub_key),
+            Some(man_ecc_priv_key),
+        ) = (
+            &fw_config.ecc_pub_key,
+            &fw_config.ecc_priv_key,
+            &man_config.ecc_pub_key,
+            &man_config.ecc_priv_key,
+        ) {
+            let mut fw_ecc_key_pair = AuthManifestECCKeyPair::default();
+            let mut man_ecc_key_pair = AuthManifestECCKeyPair::default();
+
+            let fw_ecc_pub_key_path = path.join(fw_ecc_pub_key);
+            fw_ecc_key_pair.ecc_pub_key = Crypto::ecc_pub_key_from_pem(&fw_ecc_pub_key_path)?;
+            let fw_ecc_priv_key_path = path.join(fw_ecc_priv_key);
+            fw_ecc_key_pair.ecc_priv_key = Crypto::ecc_priv_key_from_pem(&fw_ecc_priv_key_path)?;
+            let man_ecc_pub_key_path = path.join(man_ecc_pub_key);
+            man_ecc_key_pair.ecc_pub_key = Crypto::ecc_pub_key_from_pem(&man_ecc_pub_key_path)?;
+            let man_ecc_priv_key_path = path.join(man_ecc_priv_key);
+            man_ecc_key_pair.ecc_priv_key = Crypto::ecc_priv_key_from_pem(&man_ecc_priv_key_path)?;
+
+            Ok(Some(AuthManifestGeneratorEccKeyConfig {
+                fw_ecc_key_pair,
+                man_ecc_key_pair,
+            }))
+        } else {
+            Ok(None)
+        }
+    } else {
+        Ok(None)
+    }
+}
+
+pub(crate) fn lms_key_config_from_file(
+    path: &Path,
+    fw_config: &Option<AspeedAuthManifestKeyConfigFromFile>,
+    man_config: &Option<AspeedAuthManifestKeyConfigFromFile>,
+) -> anyhow::Result<Option<AuthManifestGeneratorLmsKeyConfig>> {
+    if let (Some(fw_config), Some(man_config)) = (fw_config, man_config) {
+        if let (
+            Some(fw_lms_pub_key),
+            Some(fw_lms_priv_key),
+            Some(man_lms_pub_key),
+            Some(man_lms_priv_key),
+        ) = (
+            &fw_config.lms_pub_key,
+            &fw_config.lms_priv_key,
+            &man_config.lms_pub_key,
+            &man_config.lms_priv_key,
+        ) {
+            let mut fw_lms_key_pair = AuthManifestLmsKeyPair::default();
+            let mut man_lms_key_pair = AuthManifestLmsKeyPair::default();
+
+            let fw_lms_pub_key_path = path.join(fw_lms_pub_key);
+            fw_lms_key_pair.lms_pub_key = lms_pub_key_from_pem(&fw_lms_pub_key_path)?;
+
+            let fw_lms_priv_key_path = path.join(fw_lms_priv_key);
+            fw_lms_key_pair.lms_priv_key = lms_priv_key_from_pem(&fw_lms_priv_key_path)?;
+
+            let man_lms_pub_key_path = path.join(man_lms_pub_key);
+            man_lms_key_pair.lms_pub_key = lms_pub_key_from_pem(&man_lms_pub_key_path)?;
+
+            let man_lms_priv_key_path = path.join(man_lms_priv_key);
+            man_lms_key_pair.lms_priv_key = lms_priv_key_from_pem(&man_lms_priv_key_path)?;
+
+            Ok(Some(AuthManifestGeneratorLmsKeyConfig {
+                fw_lms_key_pair,
+                man_lms_key_pair,
+            }))
+        } else {
+            Ok(None)
+        }
+    } else {
+        Ok(None)
+    }
 }

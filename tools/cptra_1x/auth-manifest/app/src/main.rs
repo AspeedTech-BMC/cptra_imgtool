@@ -3,6 +3,7 @@
 Licensed under the Apache-2.0 license.
 
 Modified by ASPEED Technology Inc., 2026-04-16: Support generate anti-rollback signature
+Modified by ASPEED Technology Inc., 2026-04-16: Make the auth manifest tool more flexible to support different signature combinations
 
 File Name:
 
@@ -15,7 +16,9 @@ Abstract:
 --*/
 
 use anyhow::Context;
-use caliptra_auth_man_gen::{AuthManifestGenerator, AuthManifestGeneratorConfig};
+use caliptra_auth_man_gen::{
+    AspeedAuthManifestGeneratorConfig, AuthManifestGenerator, AuthManifestGeneratorConfig,
+};
 use caliptra_auth_man_types::AuthManifestFlags;
 #[cfg(feature = "openssl")]
 use caliptra_image_crypto::OsslCrypto as Crypto;
@@ -26,13 +29,39 @@ use clap::{arg, value_parser, Command};
 use std::io::Write;
 use std::path::PathBuf;
 use zerocopy::IntoBytes;
-
 mod config;
 
 /// Entry point
 fn main() {
     let sub_cmds = vec![
         Command::new("create-auth-man")
+            .about("Create a new authorization manifest")
+            .arg(
+                arg!(--"version" <U32> "Manifest Version Number")
+                    .required(true)
+                    .value_parser(value_parser!(u32)),
+            )
+            .arg(
+                arg!(--"flags" <U32> "Manifest Flags")
+                    .required(true)
+                    .value_parser(value_parser!(u32)),
+            )
+            .arg(
+                arg!(--"key-dir" <FILE> "Key files directory path")
+                    .required(true)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"config" <FILE> "Manifest configuration file")
+                    .required(true)
+                    .value_parser(value_parser!(PathBuf)),
+            )
+            .arg(
+                arg!(--"out" <FILE> "Output file")
+                    .required(true)
+                    .value_parser(value_parser!(PathBuf)),
+            ),
+        Command::new("create-aspeed-auth-man")
             .about("Create a new authorization manifest")
             .arg(
                 arg!(--"version" <U32> "Manifest Version Number")
@@ -101,6 +130,7 @@ fn main() {
 
     let result = match cmd.subcommand().unwrap() {
         ("create-auth-man", args) => run_auth_man_cmd(args),
+        ("create-aspeed-auth-man", args) => run_aspeed_auth_man_cmd(args),
         ("create-sig-svn", args) => run_sig_svn_cmd(args),
         (_, _) => unreachable!(),
     };
@@ -171,6 +201,82 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     Ok(())
 }
 
+pub(crate) fn run_aspeed_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
+    let version: &u32 = args
+        .get_one::<u32>("version")
+        .with_context(|| "version arg not specified")?;
+
+    let flags: AuthManifestFlags = AuthManifestFlags::from_bits_truncate(
+        *args
+            .get_one::<u32>("flags")
+            .with_context(|| "flags arg not specified")?,
+    );
+
+    let config_path: &PathBuf = args
+        .get_one::<PathBuf>("config")
+        .with_context(|| "config arg not specified")?;
+
+    if !config_path.exists() {
+        return Err(anyhow::anyhow!("Invalid config file path"));
+    }
+
+    let key_dir: &PathBuf = args
+        .get_one::<PathBuf>("key-dir")
+        .with_context(|| "key-dir arg not specified")?;
+
+    if !key_dir.exists() {
+        return Err(anyhow::anyhow!("Invalid key directory path"));
+    }
+
+    let out_path: &PathBuf = args
+        .get_one::<PathBuf>("out")
+        .with_context(|| "out arg not specified")?;
+
+    // Load the manifest configuration from the config file.
+    let config = config::load_aspeed_auth_man_config_from_file(config_path)?;
+
+    // Decode the configuration.
+    let gen_config = AspeedAuthManifestGeneratorConfig {
+        version: *version,
+        flags,
+        vendor_ecc_key_config: config::ecc_key_config_from_file(
+            key_dir,
+            &config.vendor_fw_key_config,
+            &config.vendor_man_key_config,
+        )?,
+        vendor_lms_key_config: config::lms_key_config_from_file(
+            key_dir,
+            &config.vendor_fw_key_config,
+            &config.vendor_man_key_config,
+        )?,
+        owner_ecc_key_config: config::ecc_key_config_from_file(
+            key_dir,
+            &config.owner_fw_key_config,
+            &config.owner_man_key_config,
+        )?,
+        owner_lms_key_config: config::lms_key_config_from_file(
+            key_dir,
+            &config.owner_fw_key_config,
+            &config.owner_man_key_config,
+        )?,
+        image_metadata_list: config::image_metadata_config_from_file(&config.image_metadata_list)?,
+    };
+
+    let gen = AuthManifestGenerator::new(Crypto::default());
+    let manifest = gen.aspeed_generate(&gen_config).unwrap();
+
+    let mut out_file = std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(out_path)
+        .with_context(|| format!("Failed to create file {}", out_path.display()))?;
+
+    out_file.write_all(manifest.as_bytes())?;
+
+    Ok(())
+}
+
 pub(crate) fn run_sig_svn_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     let version: &u32 = args
         .get_one::<u32>("version")
@@ -207,19 +313,32 @@ pub(crate) fn run_sig_svn_cmd(args: &ArgMatches) -> anyhow::Result<()> {
         .with_context(|| "out arg not specified")?;
 
     // Load the manifest configuration from the config file.
-    let config = config::load_auth_man_config_from_file(config_path)?;
+    let config = config::load_aspeed_auth_man_config_from_file(config_path)?;
 
     // Decode the configuration.
-    let gen_config = AuthManifestGeneratorConfig {
+    let gen_config = AspeedAuthManifestGeneratorConfig {
         version: *version,
         flags,
-        vendor_man_key_info: config::vendor_config_from_file(
+        vendor_ecc_key_config: config::ecc_key_config_from_file(
             key_dir,
+            &config.vendor_fw_key_config,
             &config.vendor_man_key_config,
         )?,
-        owner_man_key_info: config::owner_config_from_file(key_dir, &config.owner_man_key_config)?,
-        vendor_fw_key_info: config::vendor_config_from_file(key_dir, &config.vendor_fw_key_config)?,
-        owner_fw_key_info: config::owner_config_from_file(key_dir, &config.owner_fw_key_config)?,
+        vendor_lms_key_config: config::lms_key_config_from_file(
+            key_dir,
+            &config.vendor_fw_key_config,
+            &config.vendor_man_key_config,
+        )?,
+        owner_ecc_key_config: config::ecc_key_config_from_file(
+            key_dir,
+            &config.owner_fw_key_config,
+            &config.owner_man_key_config,
+        )?,
+        owner_lms_key_config: config::lms_key_config_from_file(
+            key_dir,
+            &config.owner_fw_key_config,
+            &config.owner_man_key_config,
+        )?,
         image_metadata_list: config::image_metadata_config_from_file(&config.image_metadata_list)?,
     };
 
