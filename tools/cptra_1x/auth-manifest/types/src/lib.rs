@@ -2,6 +2,8 @@
 
 Licensed under the Apache-2.0 license.
 
+Modified by ASPEED Technology Inc., 2026-04-16: Support generate anti-rollback signature
+
 File Name:
 
    lib.rs
@@ -186,4 +188,14 @@ pub struct AuthorizationManifest {
     pub preamble: AuthManifestPreamble,
 
     pub image_metadata_col: AuthManifestImageMetadataCollection,
+}
+
+#[repr(C)]
+#[derive(IntoBytes, FromBytes, Immutable, KnownLayout, Clone, Copy, Debug, Zeroize, Default)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+pub struct AspeedAuthorizationManifest {
+    pub version: u32,
+    pub sec_version: u32,
+    pub flags: u32,
+    pub owner_pub_keys: AuthManifestPubKeys,
 }

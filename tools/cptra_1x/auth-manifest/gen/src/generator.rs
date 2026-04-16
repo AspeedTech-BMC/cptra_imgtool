@@ -2,6 +2,8 @@
 
 Licensed under the Apache-2.0 license.
 
+Modified by ASPEED Technology Inc., 2026-04-16: Support generate anti-rollback signature
+
 File Name:
 
    generator.rs
@@ -163,5 +165,42 @@ impl<Crypto: ImageGeneratorCrypto> AuthManifestGenerator<Crypto> {
         }
 
         Ok(auth_manifest)
+    }
+
+    pub fn generate_sig_svn(
+        &self,
+        svn: u32,
+        config: &AuthManifestGeneratorConfig
+    ) -> anyhow::Result<AuthManifestSignatures>{
+        let mut sig: AuthManifestSignatures = AuthManifestSignatures::default();
+        let mut aspeed_manifest  = AspeedAuthorizationManifest::default();
+        let owner_fw_key = config
+            .owner_fw_key_info
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("Failed to get owner caliptra key"))?;
+        let owner_man_key = config
+            .owner_man_key_info
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("Failed to get owner manifest key"))?;
+
+        aspeed_manifest.version = config.version;
+        aspeed_manifest.sec_version = svn;
+        aspeed_manifest.flags = config.flags.bits();
+        aspeed_manifest.owner_pub_keys = owner_man_key.pub_keys;
+        let digest= self.crypto.sha384_digest(aspeed_manifest.as_bytes())?;
+
+        if let Some(priv_keys) = owner_fw_key.priv_keys {
+            let ecc_sig = self.crypto.ecdsa384_sign(
+                &digest,
+                &priv_keys.ecc_priv_key,
+                &owner_fw_key.pub_keys.ecc_pub_key,
+            )?;
+            sig.ecc_sig = ecc_sig;
+
+            let lms_sig = self.crypto.lms_sign(&digest, &priv_keys.lms_priv_key)?;
+            sig.lms_sig = lms_sig;
+        }
+
+        Ok(sig)
     }
 }
