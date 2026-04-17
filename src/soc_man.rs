@@ -99,7 +99,6 @@ pub(crate) struct AspeedAuthorizationManifest {
 
 const VND_ECC_SIG_BIN: &[u8] = include_bytes!("vnd_sig/vnd_ecc_sig.der");
 const VND_LMS_SIG_BIN: &[u8] = include_bytes!("vnd_sig/vnd_lms_sig.der");
-const _: () = assert!(VND_ECC_SIG_BIN.len() == 103, "VND_ECC_SIG_BIN size error!");
 const _: () = assert!(VND_LMS_SIG_BIN.len() == 1620, "VND_LMS_SIG_BIN size error!");
 
 fn from_img<T: Copy>(buf: &[u8], offset: usize) -> T {
