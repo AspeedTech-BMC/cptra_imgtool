@@ -161,39 +161,46 @@ cargo --version
 rustc --version
 ```
 
-### Build caliptra-sw and caliptra-mcu-sw tool
+### Build the Caliptra Auth Manifest App and the Xtask flash tool (required before using this tool)
 
-This tool depends on **caliptra-sw** and **caliptra-mcu-sw**. Please build both dependencies before using the image tool.
+This tool depends on **caliptra-auth-manifest-app** and **xtask flash tool**. Please build both dependencies before using the image tool.
 
-#### 1) [Aspeed's caliptra-sw](https://github.com/AspeedTech-BMC/caliptra-sw)
+#### 1) [Caliptra Auth Manifest App](https://github.com/AspeedTech-BMC/cptra_imgtool/tree/master/tools/cptra_1x/auth-manifest)
+* Tool to create an SoC manifest based on a TOML configuration
+* Reference from upstream source [auth-manifest](https://github.com/chipsalliance/caliptra-sw/tree/951209a31c4373658f89e4b1211f3a557731c7d9/auth-manifest) 
 * Including Aspeed's proprietary feature like SVN version insert and prebuilt signature insert.
 
-#### 2) [Official caliptra-mcu-sw](https://github.com/chipsalliance/caliptra-mcu-sw/tree/2b7837402328ab611968d40243075082469df7ae)
-* Including the official Caliptra flash tool.
+#### 2) [Official Caliptra MCU SW](https://github.com/chipsalliance/caliptra-mcu-sw/tree/2b7837402328ab611968d40243075082469df7ae)
+* Includes the official Caliptra xtask flash tool for certain versions.
 > **IMPORTANT:** If you are developing on the AST27XXA2 or AST27XXA1 platform, you must apply the fix from commit  **2b7837402328ab611968d40243075082469df7ae**.
 
 #### Build command
 ``` bash
 cd cptra_imgtool
 
-git clone https://github.com/AspeedTech-BMC/caliptra-sw.git
-cd caliptra-sw
-git submodule update --init --recursive dpe
-cargo build -p caliptra-auth-manifest-app --target-dir ../target
-cd ..
+# Build caliptra-auth-manifest-app
+cargo build -p caliptra-auth-manifest-app
+# Binary output:
+# target/debug/caliptra-auth-manifest-app
 
-git clone https://github.com/chipsalliance/caliptra-mcu-sw.git
-cd caliptra-mcu-sw
+# Build the xtask flash tool
+git clone https://github.com/chipsalliance/caliptra-mcu-sw.git tools/cptra_1x/caliptra-mcu-sw
+cd tools/cptra_1x/caliptra-mcu-sw
 git reset --hard 2b7837402328ab611968d40243075082469df7ae
-cargo build -p xtask --target-dir ../target
-cd ..
+cargo build -p xtask --target-dir ../../../target
+# Binary output:
+# target/debug/xtask
+
+cd ../../..
 ```
 
 * Your folder structure will look like this:
 ``` bash
 cptra_imgtool
-├── caliptra-sw
-└── caliptra-mcu-sw
+ ├── tools
+ │   ├── cptra_1x 
+ │   |   ├── auth-manifest 
+ |   |   ├── caliptra-mcu-sw
 ``` 
 
 ---
@@ -338,7 +345,7 @@ The `image_metadata_list` defines the metadata entries included in the manifest 
 | `ignore_auth_check` | Defined in [caliptra-sw](https://github.com/chipsalliance/caliptra-sw/tree/rt-1.2.3/auth-manifest#metadata-entry-flags). If set, the image digest is not compared for the specified firmware ID                                                                                       |
 | `load_stage`        | Flag used by FMC (BootMCU runtime) to determine how the image is loaded in the main boot flow:<br>• `0`: Used only by specific drivers (e.g., `ddr_xx.bin`)<br>• `1`: May be loaded by the main boot flow (e.g., `atf.bin`)<br>• `2`: Used for the next-stage booting (iRoT solution) |
 
-If you want to remove an image from manifest or flash layout, locate its corresponding metadata entriy  
+If you want to remove an image from manifest or flash layout, locate its corresponding metadata entry
 and set `file = ""` and `load_stage = 0`.
 
 ```
