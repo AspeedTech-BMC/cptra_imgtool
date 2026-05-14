@@ -262,12 +262,12 @@ pub fn make_aligned_padded_copy(
     // Build output file name: <stem><suffix>.<ext>
     let padded_name = match (src.file_stem(), src.extension()) {
         (Some(stem), Some(ext)) => format!(
-            "{}{}.{ext}",
+            "{}{}_align_{align}.{ext}",
             stem.to_string_lossy(),
             suffix,
             ext = ext.to_string_lossy()
         ),
-        (Some(stem), None) => format!("{}{}", stem.to_string_lossy(), suffix),
+        (Some(stem), None) => format!("{}{}_align_{align}", stem.to_string_lossy(), suffix),
         _ => anyhow::bail!("Invalid file name: {:?}", src),
     };
 
