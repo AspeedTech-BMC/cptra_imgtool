@@ -180,9 +180,9 @@ This tool depends on **caliptra-auth-manifest-app** and **xtask flash tool**. Pl
 cd cptra_imgtool
 
 # Build caliptra-auth-manifest-app
-cargo build -p caliptra-auth-manifest-app
+cargo build -p caliptra-auth-manifest-app-1x
 # Binary output:
-# target/debug/caliptra-auth-manifest-app
+# target/debug/caliptra-auth-manifest-app-1x
 
 # Build the xtask flash tool
 git clone https://github.com/chipsalliance/caliptra-mcu-sw.git tools/cptra_1x/caliptra-mcu-sw
@@ -236,7 +236,7 @@ Example with Optional Arguments
 cargo run create-auth-man \
     --cfg config/ast2700-default-ecc-manifest.toml \
     --man out/soc-manifest.bin \
-    --key-dir keys/ast2700-default/ \
+    --key-dir key/ast2700-default/ \
     --prebuilt-dir prebuilt/ast2700-default/
 ```
 
@@ -273,7 +273,7 @@ cargo run create-auth-flash \
     --cfg config/ast2700-default-ecc-manifest.toml \
     --man out/ast2700-default-auth-manifest.bin \
     --flash out/custom-flash-image.bin \
-    --key-dir keys/ast2700-default/ \
+    --key-dir key/ast2700-default/ \
     --prebuilt-dir prebuilt/ast2700-default/
 ```
 
