@@ -31,6 +31,9 @@ const SHA384_DIGEST_SIZE: usize = 48;
 const LMS_SIG_SIZE: usize = 1620;
 const LMS_PUBK_SIZE: usize = 48;
 
+pub const AUTH_MANIFEST_TOOL_1X: &str = "caliptra-auth-manifest-app-1x";
+pub const AUTH_MANIFEST_TOOL_2X: &str = "caliptra-auth-manifest-app-2x";
+
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct AuthManifestPreamble {
@@ -332,7 +335,7 @@ impl AspeedAuthorizationManifest {
         cfg: &config::AspeedAuthManifestConfigFromFile,
         key_dir: &PathBuf,
     ) {
-        let cmd = path.tool_dir.join("caliptra-auth-manifest-app");
+        let cmd = path.tool_dir.join(AUTH_MANIFEST_TOOL_1X);
         let mut child = std::process::Command::new(cmd)
             .args([
                 "create-sig-svn",

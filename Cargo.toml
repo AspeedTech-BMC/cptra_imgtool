@@ -60,24 +60,20 @@ ufmt = {git = "https://github.com/korran/ufmt.git", rev = "1d0743c1ffffc68bc05ca
 zerocopy = {version = "=0.8.40", features = ["derive"]}
 zeroize = {version = "=1.8.2", default-features = false, features = ["zeroize_derive"]}
 
-caliptra-auth-man-gen = {path = "tools/cptra_1x/auth-manifest/gen", default-features = false}
+caliptra-auth-man-gen-1x = {path = "tools/cptra_1x/auth-manifest/gen", default-features = false}
 caliptra-auth-man-gen-2x = {path = "tools/cptra_2x/auth-manifest/gen", default-features = false}
-caliptra-auth-man-types = {path = "tools/cptra_1x/auth-manifest/types", default-features = false}
+caliptra-auth-man-types-1x = {path = "tools/cptra_1x/auth-manifest/types", default-features = false}
 caliptra-auth-man-types-2x = {path = "tools/cptra_2x/auth-manifest/types", default-features = false}
 
-caliptra-drivers = {package = "caliptra-drivers", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9"}
-caliptra-error = {package = "caliptra-error", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9", default-features = false}
-caliptra-image-crypto = {package = "caliptra-image-crypto", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9"}
-caliptra-image-elf = {package = "caliptra-image-elf", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9"}
-caliptra-image-gen = {package = "caliptra-image-gen", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9"}
-caliptra-image-serde = {package = "caliptra-image-serde", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9"}
-caliptra-image-types = {package = "caliptra-image-types", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9", default-features = false}
-caliptra-lms-types = {package = "caliptra-lms-types", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9"}
+caliptra-error-1x = {package = "caliptra-error", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9", default-features = false}
+caliptra-image-crypto-1x = {package = "caliptra-image-crypto", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9"}
+caliptra-image-gen-1x = {package = "caliptra-image-gen", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9"}
+caliptra-image-serde-1x = {package = "caliptra-image-serde", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9"}
+caliptra-image-types-1x = {package = "caliptra-image-types", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9", default-features = false}
+caliptra-lms-types-1x = {package = "caliptra-lms-types", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9"}
 
-caliptra-drivers-2x = {package = "caliptra-drivers", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
 caliptra-error-2x = {package = "caliptra-error", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35", default-features = false}
 caliptra-image-crypto-2x = {package = "caliptra-image-crypto", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
-caliptra-image-elf-2x = {package = "caliptra-image-elf", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
 caliptra-image-fake-keys-2x = {package = "caliptra-image-fake-keys", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
 caliptra-image-gen-2x = {package = "caliptra-image-gen", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
 caliptra-image-serde-2x = {package = "caliptra-image-serde", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}

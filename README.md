@@ -71,11 +71,12 @@ This project contains code derived from:
 - 2026-04-16: Make the auth manifest tool more flexible to support different signature combinations
 - 2026-04-16: Support sign helper config input
 - 2026-04-16: Ime flag support svn
-
+- 2026-05-18: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest generation tool, and remove unused dependencies: caliptra-drivers and caliptra-image-elf.
+                                                
 #### tools/cptra_2x/auth-manifest
 - 2026-03-05: Add load stage field support in manifest flags.
 - 2026-04-15: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest generation tool.
-
+- 2026-05-18: Remove unused dependencies: caliptra-drivers and caliptra-image-elf.
 
 ### Sync Strategy
 

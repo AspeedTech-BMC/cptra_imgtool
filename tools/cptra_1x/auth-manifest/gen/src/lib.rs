@@ -4,6 +4,8 @@ Licensed under the Apache-2.0 license.
 
 Modified by ASPEED Technology Inc., 2026-04-16: Make the auth manifest tool more flexible to support different signature combinations
 Modified by ASPEED Technology Inc., 2026-04-16: Support sign helper config input
+Modified by ASPEED Technology Inc., 2026-05-18: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest
+                                                generation tool, and remove unused dependencies: caliptra-drivers and caliptra-image-elf.
 
 File Name:
 
@@ -16,8 +18,8 @@ Abstract:
 --*/
 mod generator;
 
-use caliptra_auth_man_types::*;
-use caliptra_image_types::*;
+use caliptra_auth_man_types_1x::*;
+use caliptra_image_types_1x::*;
 pub use generator::AuthManifestGenerator;
 use serde_derive::{Deserialize, Serialize};
 

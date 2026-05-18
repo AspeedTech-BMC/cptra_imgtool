@@ -5,6 +5,8 @@ Licensed under the Apache-2.0 license.
 Modified by ASPEED Technology Inc., 2026-04-16: Support generate anti-rollback signature
 Modified by ASPEED Technology Inc., 2026-04-16: Make the auth manifest tool more flexible to support different signature combinations
 Modified by ASPEED Technology Inc., 2026-04-16: Support sign helper config input
+Modified by ASPEED Technology Inc., 2026-05-18: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest
+                                                generation tool, and remove unused dependencies: caliptra-drivers and caliptra-image-elf.
 
 File Name:
 
@@ -16,7 +18,7 @@ Abstract:
 
 --*/
 
-use caliptra_image_gen::ImageGeneratorCrypto;
+use caliptra_image_gen_1x::ImageGeneratorCrypto;
 use zerocopy::IntoBytes;
 
 use crate::*;

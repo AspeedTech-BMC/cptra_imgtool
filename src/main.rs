@@ -24,8 +24,6 @@ mod fw_toc_1x;
 mod soc_man;
 mod utility;
 
-const AUTH_MANIFEST_TOOL_1X: &str = "caliptra-auth-manifest-app";
-const AUTH_MANIFEST_TOOL_2X: &str = "caliptra-auth-manifest-app-2x";
 const FLASH_TOOL_1X: &str = "xtask";
 const FLASH_TOOL_2X: &str = "xtask-2x";
 
@@ -215,7 +213,7 @@ pub(crate) fn run_auth_man_cmd(args: &ArgMatches) -> anyhow::Result<()> {
     debug!("key_dir_to_auth_manifest_tool: {:#?}", key_dir.display());
 
     /* Run the caliptra manifest tool to create the manifest */
-    let cmd = path.tool_dir.join(AUTH_MANIFEST_TOOL_1X);
+    let cmd = path.tool_dir.join(soc_man::AUTH_MANIFEST_TOOL_1X);
     println!("Manifest tool:  {}", cmd.display());
     config::check_path_exists(cmd.as_path())?;
 
@@ -271,7 +269,7 @@ pub(crate) fn run_auth_man_cmd_2x(args: &ArgMatches) -> anyhow::Result<()> {
     debug!("key_dir_to_auth_manifest_tool: {:#?}", key_dir.display());
 
     /* Run the caliptra manifest tool to create the manifest */
-    let cmd = path.tool_dir.join(AUTH_MANIFEST_TOOL_2X);
+    let cmd = path.tool_dir.join(soc_man::AUTH_MANIFEST_TOOL_2X);
     println!("Manifest tool:  {}", cmd.display());
     config::check_path_exists(cmd.as_path())?;
 

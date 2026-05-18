@@ -6,6 +6,8 @@ Modified by ASPEED Technology Inc., 2026-04-16: Support load stage filed in mani
 Modified by ASPEED Technology Inc., 2026-04-16: Make the auth manifest tool more flexible to support different signature combinations
 Modified by ASPEED Technology Inc., 2026-04-16: Support sign helper config input
 Modified by ASPEED Technology Inc., 2026-04-16: Ime flag support svn
+Modified by ASPEED Technology Inc., 2026-05-18: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest
+                                                generation tool, and remove unused dependencies: caliptra-drivers and caliptra-image-elf.
 
 File Name:
 
@@ -18,20 +20,20 @@ Abstract:
 --*/
 
 use anyhow::Context;
-use caliptra_auth_man_gen::{
+use caliptra_auth_man_gen_1x::{
     AspeedAuthManifestSignHelper, AuthManifestECCKeyPair, AuthManifestGeneratorEccKeyConfig,
     AuthManifestGeneratorEccKeyOptionalConfig, AuthManifestGeneratorKeyConfig,
     AuthManifestGeneratorLmsKeyConfig, AuthManifestGeneratorLmsKeyOptionalConfig,
     AuthManifestLmsKeyPair,
 };
-use caliptra_auth_man_types::{AuthManifestImageMetadata, AuthManifestPrivKeys};
-use caliptra_auth_man_types::{AuthManifestPubKeys, ImageMetadataFlags};
+use caliptra_auth_man_types_1x::{AuthManifestImageMetadata, AuthManifestPrivKeys};
+use caliptra_auth_man_types_1x::{AuthManifestPubKeys, ImageMetadataFlags};
 #[cfg(feature = "openssl")]
-use caliptra_image_crypto::OsslCrypto as Crypto;
+use caliptra_image_crypto_1x::OsslCrypto as Crypto;
 #[cfg(feature = "rustcrypto")]
-use caliptra_image_crypto::RustCrypto as Crypto;
-use caliptra_image_crypto::{lms_priv_key_from_pem, lms_pub_key_from_pem};
-use caliptra_image_gen::*;
+use caliptra_image_crypto_1x::RustCrypto as Crypto;
+use caliptra_image_crypto_1x::{lms_priv_key_from_pem, lms_pub_key_from_pem};
+use caliptra_image_gen_1x::*;
 use serde_derive::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 

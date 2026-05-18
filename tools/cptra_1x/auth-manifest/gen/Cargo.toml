@@ -1,10 +1,12 @@
 # Licensed under the Apache-2.0 license.
 
 # Modified by ASPEED Technology Inc., 2026-04-16: Support sign helper config input
+# Modified by ASPEED Technology Inc., 2026-05-18: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest 
+#                                                 generation tool, and remove unused dependencies: caliptra-drivers and caliptra-image-elf.
 
 [package]
 edition = "2021"
-name = "caliptra-auth-man-gen"
+name = "caliptra-auth-man-gen-1x"
 version = "0.1.0"
 
 [lib]
@@ -13,10 +15,10 @@ doctest = false
 [dependencies]
 anyhow.workspace = true
 bitflags.workspace = true
-caliptra-auth-man-types = {workspace = true, features = ["std"]}
-caliptra-image-gen.workspace = true
-caliptra-image-types = {workspace = true, features = ["std"]}
-caliptra-lms-types.workspace = true
+caliptra-auth-man-types-1x = {workspace = true, features = ["std"]}
+caliptra-image-gen-1x.workspace = true
+caliptra-image-types-1x = {workspace = true, features = ["std"]}
+caliptra-lms-types-1x.workspace = true
 hex.workspace = true
 memoffset.workspace = true
 num-bigint.workspace = true

@@ -41,8 +41,8 @@ fi
 # Build the caliptra-sw tool
 cptra_printf "Building auth-manifest tool..."
 cd $CPTRA_IMGTOOL_DIR
-cargo build -p caliptra-auth-manifest-app --target-dir $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR
-cp $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR/debug/caliptra-auth-manifest-app $CPTRA_TARGET_DIR/debug/
+cargo build -p caliptra-auth-manifest-app-1x --target-dir $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR
+cp $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR/debug/caliptra-auth-manifest-app-1x $CPTRA_TARGET_DIR/debug/
 
 # Build caliptra-mcu-sw tool
 cptra_printf "Building caliptra-mcu-sw tool..."
