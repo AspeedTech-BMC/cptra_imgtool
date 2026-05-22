@@ -14,11 +14,13 @@ Abstract:
 
 use anyhow::{anyhow, Context, Result};
 use clap::ArgMatches;
+use colored::*;
 use hex;
 use log::debug;
 use once_cell::sync::Lazy;
 use serde_derive::{Deserialize, Serialize};
 use sha2::{Digest, Sha384};
+use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs;
 use std::fs::File;
@@ -184,6 +186,22 @@ pub(crate) struct AspeedAuthManifestConfigFromFile {
     pub sign_helper: Option<AspeedAuthManifestSignHelper>,
 }
 
+#[derive(Debug, PartialEq, Eq)]
+enum FirmwareImageChangeKind {
+    Added,
+    Modified,
+    Removed,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct FirmwareImageChange {
+    kind: FirmwareImageChangeKind,
+    fw_id: u32,
+    file: Option<String>,
+    old_digest: Option<String>,
+    new_digest: Option<String>,
+}
+
 pub fn create_tmp_file(name: &str, size: u64, fill: Option<u8>) -> PathBuf {
     let path = GLOBAL_TMP_DIR.path().join(name);
     let mut file = File::create(&path).unwrap();
@@ -212,6 +230,126 @@ fn pad_to_aligned(mut data: Vec<u8>, pad: u8, aligned: usize) -> Vec<u8> {
     let pad_len = (aligned - (data.len() % aligned)) % aligned;
     data.extend(vec![pad; pad_len]);
     data
+}
+
+fn metadata_by_fw_id(
+    metadata: &[ImageMetadataConfigFromFile],
+) -> BTreeMap<u32, &ImageMetadataConfigFromFile> {
+    metadata.iter().map(|img| (img.fw_id, img)).collect()
+}
+
+fn compare_firmware_image_digests(
+    previous: &AuthManifestConfigFromFile,
+    current: &AuthManifestConfigFromFile,
+    file_by_fw_id: &BTreeMap<u32, String>,
+) -> Vec<FirmwareImageChange> {
+    let previous_metadata = metadata_by_fw_id(&previous.image_metadata_list);
+    let current_metadata = metadata_by_fw_id(&current.image_metadata_list);
+    let fw_ids: BTreeSet<u32> = previous_metadata
+        .keys()
+        .chain(current_metadata.keys())
+        .copied()
+        .collect();
+
+    let mut changes = Vec::new();
+
+    for fw_id in fw_ids {
+        match (previous_metadata.get(&fw_id), current_metadata.get(&fw_id)) {
+            (Some(previous), Some(current)) if previous.digest != current.digest => {
+                changes.push(FirmwareImageChange {
+                    kind: FirmwareImageChangeKind::Modified,
+                    fw_id,
+                    file: file_by_fw_id.get(&fw_id).cloned(),
+                    old_digest: Some(previous.digest.clone()),
+                    new_digest: Some(current.digest.clone()),
+                });
+            }
+            (None, Some(current)) => {
+                changes.push(FirmwareImageChange {
+                    kind: FirmwareImageChangeKind::Added,
+                    fw_id,
+                    file: file_by_fw_id.get(&fw_id).cloned(),
+                    old_digest: None,
+                    new_digest: Some(current.digest.clone()),
+                });
+            }
+            (Some(previous), None) => {
+                changes.push(FirmwareImageChange {
+                    kind: FirmwareImageChangeKind::Removed,
+                    fw_id,
+                    file: None,
+                    old_digest: Some(previous.digest.clone()),
+                    new_digest: None,
+                });
+            }
+            _ => {}
+        }
+    }
+
+    changes
+}
+
+fn filename_for_display(file: Option<&str>) -> String {
+    file.and_then(|path| Path::new(path).file_name())
+        .and_then(|filename| filename.to_str())
+        .map(|filename| filename.to_string())
+        .unwrap_or_else(|| "<not in current config>".to_string())
+}
+
+fn print_firmware_image_digest_changes(previous_cfg_path: &Path, changes: &[FirmwareImageChange]) {
+    println!("=========================================================== FirmwareImageChanges ===========================================================");
+    println!("Previous config: {}", previous_cfg_path.display());
+
+    if changes.is_empty() {
+        println!("FirmwareChange: no firmware image digest changes detected.");
+        return;
+    }
+
+    let filenames = changes
+        .iter()
+        .map(|change| filename_for_display(change.file.as_deref()))
+        .collect::<Vec<_>>();
+    let max_filename_chars = filenames
+        .iter()
+        .map(|filename| filename.chars().count())
+        .max()
+        .unwrap_or(0)
+        + 1;
+
+    for (idx, change) in changes.iter().enumerate() {
+        let kind = match change.kind {
+            FirmwareImageChangeKind::Added => "ADDED",
+            FirmwareImageChangeKind::Modified => "MODIFIED",
+            FirmwareImageChangeKind::Removed => "REMOVED",
+        };
+        let kind = format!("{:<8}", kind);
+        let kind = match change.kind {
+            FirmwareImageChangeKind::Added => kind.bright_green().bold(),
+            FirmwareImageChangeKind::Modified => kind.bright_magenta().bold(),
+            FirmwareImageChangeKind::Removed => kind.bright_red().bold(),
+        };
+        let filename = format!("{:>width$}", filenames[idx], width = max_filename_chars)
+            .bright_yellow()
+            .bold();
+
+        println!(
+            "FirmwareChange[{:>2}]: type={} fw_id={:#010X} filename={}",
+            idx, kind, change.fw_id, filename
+        );
+    }
+}
+
+fn load_previous_caliptra_cfg(path: &Path) -> Result<Option<AuthManifestConfigFromFile>> {
+    if !path.exists() {
+        return Ok(None);
+    }
+
+    let config_str = fs::read_to_string(path)
+        .with_context(|| format!("Failed to read previous config {}", path.display()))?;
+    let config: AuthManifestConfigFromFile = toml::from_str(&config_str)
+        .with_context(|| format!("Failed to parse previous config {}", path.display()))?;
+
+    Ok(Some(config))
 }
 
 pub fn check_path_exists<P: AsRef<Path>>(path: P) -> Result<()> {
@@ -482,7 +620,14 @@ impl AspeedAuthManifestConfigFromFile {
         }
     }
 
-    pub(crate) fn save_caliptra_cfg(&self, path_mngt: &AspeedManifestCreationPath) -> Result<()> {
+    fn image_files_by_fw_id(&self) -> BTreeMap<u32, String> {
+        self.image_metadata_list
+            .iter()
+            .map(|img| (img.fw_id, img.file.clone()))
+            .collect()
+    }
+
+    fn build_caliptra_cfg(&self) -> Result<AuthManifestConfigFromFile> {
         let mut cfg: AuthManifestConfigFromFile = AuthManifestConfigFromFile::default();
 
         /* Read the configuration from aspeed manifest configuration */
@@ -493,11 +638,12 @@ impl AspeedAuthManifestConfigFromFile {
         cfg.image_metadata_list = self
             .image_metadata_list
             .iter()
-            .map(|img| {
-                let data = std::fs::read(&img.file).unwrap();
+            .map(|img| -> Result<ImageMetadataConfigFromFile> {
+                let data = fs::read(&img.file)
+                    .with_context(|| format!("Failed to read image file {}", img.file))?;
                 let data_align = pad_to_aligned(data, 0, 4);
                 let digest = hex::encode(Sha384::digest(&data_align));
-                ImageMetadataConfigFromFile {
+                Ok(ImageMetadataConfigFromFile {
                     digest: digest,
                     source: img.source,
                     fw_id: img.fw_id,
@@ -509,13 +655,45 @@ impl AspeedAuthManifestConfigFromFile {
                     image_load_address: img.image_load_address,
                     image_staging_address: img.image_staging_address,
                     classification: img.classification,
-                }
+                })
             })
-            .collect();
+            .collect::<Result<Vec<_>>>()?;
         cfg.sign_helper = self.sign_helper.clone();
+
+        Ok(cfg)
+    }
+
+    pub(crate) fn save_caliptra_cfg(&self, path_mngt: &AspeedManifestCreationPath) -> Result<()> {
+        let cfg = self.build_caliptra_cfg()?;
+        let cfg_toml = toml::to_string(&cfg).context("Failed to serialize caliptra config")?;
 
         /* Create the caliptra manifest read from aspeed manifest config */
         let caliptra_cfg = &path_mngt.caliptra_cfg.unwrap_or_err();
+
+        match load_previous_caliptra_cfg(caliptra_cfg) {
+            Ok(Some(previous_cfg)) => {
+                let changes = compare_firmware_image_digests(
+                    &previous_cfg,
+                    &cfg,
+                    &self.image_files_by_fw_id(),
+                );
+                print_firmware_image_digest_changes(caliptra_cfg, &changes);
+            }
+            Ok(None) => {
+                println!(
+                    "No previous caliptra config found; skip firmware image change comparison: {}",
+                    caliptra_cfg.display()
+                );
+            }
+            Err(err) => {
+                println!(
+                    "Warning: failed to compare with previous caliptra config {}: {:#}",
+                    caliptra_cfg.display(),
+                    err
+                );
+            }
+        }
+
         let mut out_file = std::fs::OpenOptions::new()
             .create(true)
             .truncate(true)
@@ -523,9 +701,165 @@ impl AspeedAuthManifestConfigFromFile {
             .open(caliptra_cfg)
             .with_context(|| format!("Failed to create file {}", caliptra_cfg.display()))?;
 
-        out_file.write_all(toml::to_string(&cfg).unwrap().as_bytes())?;
+        out_file.write_all(cfg_toml.as_bytes())?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn metadata(fw_id: u32, digest: &str) -> ImageMetadataConfigFromFile {
+        ImageMetadataConfigFromFile {
+            fw_id,
+            digest: digest.to_string(),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn compare_firmware_image_digests_reports_added_modified_removed() {
+        let previous = AuthManifestConfigFromFile {
+            image_metadata_list: vec![
+                metadata(1, "old-one"),
+                metadata(2, "same-two"),
+                metadata(3, "removed-three"),
+            ],
+            ..Default::default()
+        };
+        let current = AuthManifestConfigFromFile {
+            image_metadata_list: vec![
+                metadata(1, "new-one"),
+                metadata(2, "same-two"),
+                metadata(4, "added-four"),
+            ],
+            ..Default::default()
+        };
+        let file_by_fw_id = BTreeMap::from([
+            (1, "prebuilt/fw1.bin".to_string()),
+            (2, "prebuilt/fw2.bin".to_string()),
+            (4, "prebuilt/fw4.bin".to_string()),
+        ]);
+
+        let changes = compare_firmware_image_digests(&previous, &current, &file_by_fw_id);
+
+        assert_eq!(
+            changes,
+            vec![
+                FirmwareImageChange {
+                    kind: FirmwareImageChangeKind::Modified,
+                    fw_id: 1,
+                    file: Some("prebuilt/fw1.bin".to_string()),
+                    old_digest: Some("old-one".to_string()),
+                    new_digest: Some("new-one".to_string()),
+                },
+                FirmwareImageChange {
+                    kind: FirmwareImageChangeKind::Removed,
+                    fw_id: 3,
+                    file: None,
+                    old_digest: Some("removed-three".to_string()),
+                    new_digest: None,
+                },
+                FirmwareImageChange {
+                    kind: FirmwareImageChangeKind::Added,
+                    fw_id: 4,
+                    file: Some("prebuilt/fw4.bin".to_string()),
+                    old_digest: None,
+                    new_digest: Some("added-four".to_string()),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn compare_firmware_image_digests_ignores_unchanged_images() {
+        let previous = AuthManifestConfigFromFile {
+            image_metadata_list: vec![metadata(1, "same")],
+            ..Default::default()
+        };
+        let current = AuthManifestConfigFromFile {
+            image_metadata_list: vec![metadata(1, "same")],
+            ..Default::default()
+        };
+
+        assert!(compare_firmware_image_digests(&previous, &current, &BTreeMap::new()).is_empty());
+    }
+
+    #[test]
+    fn filename_for_display_strips_directory() {
+        assert_eq!(
+            filename_for_display(Some("prebuilt/ast2700-default/atf.bin")),
+            "atf.bin"
+        );
+    }
+
+    #[test]
+    fn load_previous_caliptra_cfg_returns_none_when_file_is_missing() {
+        let tmp = tempfile::tempdir().unwrap();
+        let missing_path = tmp.path().join("missing-caliptra-manifest.toml");
+
+        let previous = load_previous_caliptra_cfg(&missing_path).unwrap();
+
+        assert!(previous.is_none());
+    }
+
+    #[test]
+    fn load_previous_caliptra_cfg_reads_existing_metadata() {
+        let tmp = tempfile::tempdir().unwrap();
+        let cfg_path = tmp.path().join("caliptra-manifest.toml");
+        let cfg = AuthManifestConfigFromFile {
+            image_metadata_list: vec![metadata(0x10, "digest-10")],
+            ..Default::default()
+        };
+        fs::write(&cfg_path, toml::to_string(&cfg).unwrap()).unwrap();
+
+        let previous = load_previous_caliptra_cfg(&cfg_path).unwrap().unwrap();
+
+        assert_eq!(previous.image_metadata_list.len(), 1);
+        assert_eq!(previous.image_metadata_list[0].fw_id, 0x10);
+        assert_eq!(previous.image_metadata_list[0].digest, "digest-10");
+    }
+
+    #[test]
+    fn build_caliptra_cfg_hashes_four_byte_padded_image() {
+        let tmp = tempfile::tempdir().unwrap();
+        let image_path = tmp.path().join("three-byte-fw.bin");
+        fs::write(&image_path, [0xAA, 0xBB, 0xCC]).unwrap();
+        let expected_digest = hex::encode(Sha384::digest([0xAA, 0xBB, 0xCC, 0x00]));
+        let cfg = AspeedAuthManifestConfigFromFile {
+            image_metadata_list: vec![AspeedImageMetadataConfigFromFile {
+                file: image_path.to_string_lossy().to_string(),
+                source: 1,
+                fw_id: 0x20,
+                ignore_auth_check: true,
+                load_stage: 2,
+                svn: Some(3),
+                exec_bit: Some(1),
+                component_id: Some(4),
+                image_load_address: Some(0x1000),
+                image_staging_address: Some(0x2000),
+                classification: Some(5),
+            }],
+            ..Default::default()
+        };
+
+        let caliptra_cfg = cfg.build_caliptra_cfg().unwrap();
+
+        assert_eq!(caliptra_cfg.image_metadata_list.len(), 1);
+        let image = &caliptra_cfg.image_metadata_list[0];
+        assert_eq!(image.digest, expected_digest);
+        assert_eq!(image.source, 1);
+        assert_eq!(image.fw_id, 0x20);
+        assert!(image.ignore_auth_check);
+        assert_eq!(image.load_stage, 2);
+        assert_eq!(image.svn, Some(3));
+        assert_eq!(image.exec_bit, Some(1));
+        assert_eq!(image.component_id, Some(4));
+        assert_eq!(image.image_load_address, Some(0x1000));
+        assert_eq!(image.image_staging_address, Some(0x2000));
+        assert_eq!(image.classification, Some(5));
     }
 }
 
