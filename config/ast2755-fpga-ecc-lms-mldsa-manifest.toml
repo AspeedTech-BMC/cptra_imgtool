@@ -64,7 +64,7 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000_0000_0000_0000
+image_load_address = 0x0000_0000_34BA_0000
 image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
@@ -76,7 +76,7 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000_0000_0000_0000
+image_load_address = 0x0000_0000_34BA_0000
 image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
@@ -88,7 +88,7 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000_0000_0000_0000
+image_load_address = 0x0000_0000_34BA_0000
 image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
@@ -100,7 +100,7 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000_0000_0000_0000
+image_load_address = 0x0000_0000_34BA_0000
 image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
@@ -112,7 +112,7 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000_0000_0000_0000
+image_load_address = 0x0000_0000_34BA_0000
 image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
@@ -124,7 +124,7 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000_0000_0000_0000
+image_load_address = 0x0000_0000_34BA_0000
 image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
@@ -136,7 +136,7 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000_0000_0000_0000
+image_load_address = 0x0000_0000_34BA_0000
 image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
@@ -148,7 +148,7 @@ ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000_0000_0000_0000
+image_load_address = 0x0000_0000_34BA_0000
 image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
