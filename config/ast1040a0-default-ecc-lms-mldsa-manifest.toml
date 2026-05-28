@@ -232,6 +232,6 @@ ignore_auth_check = false
 load_stage = 1
 exec_bit = 0
 component_id = 0
-image_load_address = 0x0000000000000000
+image_load_address = 0x00000000F0000000
 image_staging_address = 0x0000000000000000
 classification = 0
