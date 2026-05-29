@@ -4,7 +4,7 @@
 version = 1
 flags = 0
 security_version = 1
-prj_name = "ast2700a1-irot"
+prj_name = "ast2700a1-rtos"
 
 [vendor_fw_key_config]
 ecc_pub_key = "vnd-fw-ecc-pubk.pem"
@@ -119,7 +119,7 @@ ignore_auth_check = false
 load_stage = 2
 
 [[image_metadata_list]]
-file = "ssp.bin"
+file = "ast2700-rtos.bin"
 source = 1
 fw_id = 13
 ignore_auth_check = false
