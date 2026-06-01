@@ -23,6 +23,7 @@ The ASPEED Caliptra Image Tool packages SoC images into the Caliptra flash image
   - [Trust Chain](#trust-chain)
 - [Secure Boot Configuration](#secure-boot-configuration)
 - [Signing Using a Sign Helper](#signing-using-a-sign-helper)
+- [Building in an Offline Environment](#building-in-an-offline-environment)
 ---
 
 ## What it does
@@ -511,5 +512,103 @@ There are two ways to use the sign helper:
    The TOML file does not contain the FW owner private key, and FW signing is performed by the sign helper.  
    The TOML file stores the **Manifest owner key pair** (public/private), which is used for manifest signing.  
    Please refer to: [ast2700a1-default-ecc-lms-fw-sign-helper-stdin-manifest.toml](https://github.com/AspeedTech-BMC/cptra_imgtool/blob/master/config/ast2700a1-default-ecc-lms-fw-sign-helper-stdin-manifest.toml).
+
+---
+
+## Building in an Offline Environment
+
+This section describes how to build `cptra_imgtool` in an environment without internet access.  
+The strategy is to perform a full build on an online machine first to populate a local Cargo cache, then transfer everything to the offline machine.
+
+### Step 1: Build on an Online Machine
+
+Set a custom `CARGO_HOME` pointing to a directory inside the project so it can be copied along with the source tree. Then run all build commands normally to fetch and cache all dependencies.
+
+``` bash
+cd cptra_imgtool
+
+# Use a project-local directory as CARGO_HOME so it can be easily transferred
+export CARGO_HOME=$(pwd)/offline_cargo_home
+
+# Build caliptra-auth-manifest-app
+cargo build -p caliptra-auth-manifest-app-1x
+# Binary output:
+# target/debug/caliptra-auth-manifest-app-1x
+
+# Build the xtask flash tool
+git clone https://github.com/chipsalliance/caliptra-mcu-sw.git tools/cptra_1x/caliptra-mcu-sw
+cd tools/cptra_1x/caliptra-mcu-sw
+git reset --hard 2b7837402328ab611968d40243075082469df7ae
+cargo build -p xtask --target-dir ../../../target
+# Binary output:
+# target/debug/xtask
+
+cd ../../..
+
+# Run once to download and cache the main binary's dependencies,
+# and to verify that the tools compile and run correctly
+cargo run -- create-auth-man --cfg config/ast2700-default-ecc-manifest.toml
+cargo run -- create-auth-flash --cfg config/ast2700-default-ecc-manifest.toml
+```
+
+After these commands complete, `offline_cargo_home/` will contain the full Cargo registry cache and all git-sourced dependencies required to build the project.
+
+### Step 2: Transfer to the Offline Machine
+
+Copy the entire `cptra_imgtool` directory (including `offline_cargo_home/` and `tools/cptra_1x/caliptra-mcu-sw/`) to the offline machine.
+
+``` bash
+# On the online machine — create a transferable archive
+tar -czf cptra_imgtool_offline.tar.gz cptra_imgtool/
+```
+
+Then transfer `cptra_imgtool_offline.tar.gz` to the offline machine and extract it.
+
+``` bash
+# On the offline machine
+tar -xzf cptra_imgtool_offline.tar.gz
+```
+
+> **Note:** Make sure the Rust toolchain (`cargo`, `rustc`) is also installed on the offline machine with the same version used during the online build. You can check the required toolchain version in `rust-toolchain.toml`.
+
+### Step 3: Build on the Offline Machine
+
+Point `CARGO_HOME` to the transferred cache directory and add `--offline` to all `cargo` commands to prevent any network access.
+
+``` bash
+cd cptra_imgtool
+export CARGO_HOME=$(pwd)/offline_cargo_home
+
+# Build caliptra-auth-manifest-app
+cargo build -p caliptra-auth-manifest-app-1x --offline
+# Binary output:
+# target/debug/caliptra-auth-manifest-app-1x
+
+# Build the xtask flash tool
+cd tools/cptra_1x/caliptra-mcu-sw
+cargo build -p xtask --target-dir ../../../target --offline
+# Binary output:
+# target/debug/xtask
+
+cd ../../..
+```
+
+For image generation commands, add `--offline` after `run`:
+
+``` bash
+# Build only the Caliptra SoC Manifest
+cargo run --offline -- create-auth-man --cfg config/ast2700-default-ecc-manifest.toml
+
+# Build the Caliptra Manifest Bundle Image
+cargo run --offline -- create-auth-flash --cfg config/ast2700-default-ecc-manifest.toml
+```
+
+### Summary
+
+| Step | Machine | Action |
+| ---- | ------- | ------ |
+| 1 | Online  | Set `CARGO_HOME`, run all `cargo build` commands to populate the cache |
+| 2 | Online → Offline | Copy entire `cptra_imgtool/` directory (including `offline_cargo_home/`) |
+| 3 | Offline | Set `CARGO_HOME` to the same path, add `--offline` to all `cargo` commands |
 
 ---
