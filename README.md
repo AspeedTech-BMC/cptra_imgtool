@@ -2,6 +2,14 @@
 
 The ASPEED Caliptra Image Tool packages SoC images into the Caliptra flash image layout.
 
+> [!IMPORTANT]
+> **Prebuilt Binaries Notice**
+>
+> The `prebuilt/` folder in this repository contains **example test binaries only** and may **not** reflect the latest firmware.
+>
+> For the most up-to-date prebuilt binaries, please download them from:
+> **[https://github.com/AspeedTech-BMC/bmc-pb](https://github.com/AspeedTech-BMC/bmc-pb)**
+
 ---
 
 - [What it does](#what-it-does)
@@ -374,6 +382,10 @@ load_stage = 0
 
 ### Image Update
 If you want to package new firmware using cptra image tool, replace the image and run cptra image tool command.
+
+> [!NOTE]
+> The `prebuilt/` folder included in this repository is a **test example only**.
+> Always use the latest prebuilt binaries from **[https://github.com/AspeedTech-BMC/bmc-pb](https://github.com/AspeedTech-BMC/bmc-pb)**.
 
 The image file structure like this:
 ```
