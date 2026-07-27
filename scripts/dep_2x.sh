@@ -48,7 +48,7 @@ cp $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR/debug/caliptra-auth-manifest-app-2x $CPTRA_
 # Build caliptra-mcu-sw tool
 cptra_printf "Building caliptra-mcu-sw tool..."
 cd $FLASH_TOOL_DIR
-cargo build -p xtask --target-dir $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR
-cp $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR/debug/xtask $CPTRA_TARGET_DIR/debug/xtask-2x
+cargo build -p caliptra-mcu-xtask --target-dir $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR
+cp $CPTRA_AUTH_FLASH_TOOL_TARGET_DIR/debug/caliptra-mcu-xtask $CPTRA_TARGET_DIR/debug/xtask-2x
 
 popd
