@@ -7,6 +7,7 @@ Modified by ASPEED Technology Inc., 2026-04-16: Make the auth manifest tool more
 Modified by ASPEED Technology Inc., 2026-04-16: Support sign helper config input
 Modified by ASPEED Technology Inc., 2026-05-18: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest
                                                 generation tool, and remove unused dependencies: caliptra-drivers and caliptra-image-elf.
+Modified by ASPEED Technology Inc., 2026-07-28: Select LMS authentication tree paths by matching the configured public key.
 
 File Name:
 
@@ -97,7 +98,12 @@ impl<Crypto: ImageGeneratorCrypto> AuthManifestGenerator<Crypto> {
             )?;
             auth_manifest.preamble.vendor_pub_keys_signatures.ecc_sig = sig;
 
-            let lms_sig = self.crypto.lms_sign(&digest, &priv_keys.lms_priv_key)?;
+            let lms_sig = crate::lms_dual_mode::sign_lms_matching_public_key(
+                &self.crypto,
+                &digest,
+                &priv_keys.lms_priv_key,
+                &config.vendor_fw_key_info.pub_keys.lms_pub_key,
+            )?;
             auth_manifest.preamble.vendor_pub_keys_signatures.lms_sig = lms_sig;
         }
 
@@ -118,9 +124,12 @@ impl<Crypto: ImageGeneratorCrypto> AuthManifestGenerator<Crypto> {
                     &owner_fw_config.pub_keys.ecc_pub_key,
                 )?;
                 auth_manifest.preamble.owner_pub_keys_signatures.ecc_sig = sig;
-                let lms_sig = self
-                    .crypto
-                    .lms_sign(&digest, &owner_fw_priv_keys.lms_priv_key)?;
+                let lms_sig = crate::lms_dual_mode::sign_lms_matching_public_key(
+                    &self.crypto,
+                    &digest,
+                    &owner_fw_priv_keys.lms_priv_key,
+                    &owner_fw_config.pub_keys.lms_pub_key,
+                )?;
                 auth_manifest.preamble.owner_pub_keys_signatures.lms_sig = lms_sig;
             }
         }
@@ -146,9 +155,12 @@ impl<Crypto: ImageGeneratorCrypto> AuthManifestGenerator<Crypto> {
                     .vendor_image_metdata_signatures
                     .ecc_sig = sig;
 
-                let lms_sig = self
-                    .crypto
-                    .lms_sign(&digest, &vendor_man_priv_keys.lms_priv_key)?;
+                let lms_sig = crate::lms_dual_mode::sign_lms_matching_public_key(
+                    &self.crypto,
+                    &digest,
+                    &vendor_man_priv_keys.lms_priv_key,
+                    &config.vendor_man_key_info.pub_keys.lms_pub_key,
+                )?;
                 auth_manifest
                     .preamble
                     .vendor_image_metdata_signatures
@@ -169,9 +181,12 @@ impl<Crypto: ImageGeneratorCrypto> AuthManifestGenerator<Crypto> {
                     .owner_image_metdata_signatures
                     .ecc_sig = sig;
 
-                let lms_sig = self
-                    .crypto
-                    .lms_sign(&digest, &owner_man_priv_keys.lms_priv_key)?;
+                let lms_sig = crate::lms_dual_mode::sign_lms_matching_public_key(
+                    &self.crypto,
+                    &digest,
+                    &owner_man_priv_keys.lms_priv_key,
+                    &owner_man_config.pub_keys.lms_pub_key,
+                )?;
                 auth_manifest
                     .preamble
                     .owner_image_metdata_signatures
@@ -242,9 +257,12 @@ impl<Crypto: ImageGeneratorCrypto> AuthManifestGenerator<Crypto> {
         }
 
         if let Some(vendor_lms_config) = &config.vendor_lms_key_config {
-            let lms_sig = self
-                .crypto
-                .lms_sign(&digest, &vendor_lms_config.fw_lms_key_pair.lms_priv_key)?;
+            let lms_sig = crate::lms_dual_mode::sign_lms_matching_public_key(
+                &self.crypto,
+                &digest,
+                &vendor_lms_config.fw_lms_key_pair.lms_priv_key,
+                &vendor_lms_config.fw_lms_key_pair.lms_pub_key,
+            )?;
             auth_manifest.preamble.vendor_pub_keys_signatures.lms_sig = lms_sig;
         }
 
@@ -329,9 +347,12 @@ impl<Crypto: ImageGeneratorCrypto> AuthManifestGenerator<Crypto> {
         }
 
         if let Some(owner_lms_config) = &config.owner_lms_key_config {
-            let lms_sig = self
-                .crypto
-                .lms_sign(&digest, &owner_lms_config.fw_lms_key_pair.lms_priv_key)?;
+            let lms_sig = crate::lms_dual_mode::sign_lms_matching_public_key(
+                &self.crypto,
+                &digest,
+                &owner_lms_config.fw_lms_key_pair.lms_priv_key,
+                &owner_lms_config.fw_lms_key_pair.lms_pub_key,
+            )?;
             auth_manifest.preamble.owner_pub_keys_signatures.lms_sig = lms_sig;
         } else if !owner_lms_fw_key_sign_helper_cmd.is_empty() {
             let sig_pair = Self::sign_with_helper(
@@ -370,9 +391,12 @@ impl<Crypto: ImageGeneratorCrypto> AuthManifestGenerator<Crypto> {
             }
 
             if let Some(vendor_lms_config) = &config.vendor_lms_key_config {
-                let lms_sig = self
-                    .crypto
-                    .lms_sign(&digest, &vendor_lms_config.man_lms_key_pair.lms_priv_key)?;
+                let lms_sig = crate::lms_dual_mode::sign_lms_matching_public_key(
+                    &self.crypto,
+                    &digest,
+                    &vendor_lms_config.man_lms_key_pair.lms_priv_key,
+                    &vendor_lms_config.man_lms_key_pair.lms_pub_key,
+                )?;
                 auth_manifest
                     .preamble
                     .vendor_image_metdata_signatures
@@ -413,8 +437,12 @@ impl<Crypto: ImageGeneratorCrypto> AuthManifestGenerator<Crypto> {
             .ecc_sig = ecc_sig;
 
         let lms_sig = if let Some(owner_lms_config) = &config.owner_lms_key_config {
-            self.crypto
-                .lms_sign(&digest, &owner_lms_config.man_lms_key_pair.lms_priv_key)?
+            crate::lms_dual_mode::sign_lms_matching_public_key(
+                &self.crypto,
+                &digest,
+                &owner_lms_config.man_lms_key_pair.lms_priv_key,
+                &owner_lms_config.man_lms_key_pair.lms_pub_key,
+            )?
         } else if !owner_lms_man_key_sign_helper_cmd.is_empty() {
             let sig_pair = Self::sign_with_helper(
                 &digest,
@@ -515,9 +543,12 @@ impl<Crypto: ImageGeneratorCrypto> AuthManifestGenerator<Crypto> {
         }
 
         if let Some(owner_lms_config) = &config.owner_lms_key_config {
-            let lms_sig = self
-                .crypto
-                .lms_sign(&digest, &owner_lms_config.fw_lms_key_pair.lms_priv_key)?;
+            let lms_sig = crate::lms_dual_mode::sign_lms_matching_public_key(
+                &self.crypto,
+                &digest,
+                &owner_lms_config.fw_lms_key_pair.lms_priv_key,
+                &owner_lms_config.fw_lms_key_pair.lms_pub_key,
+            )?;
             sig.lms_sig = lms_sig;
         } else if !owner_lms_fw_key_sign_helper_cmd.is_empty() {
             let sig_pair = Self::sign_with_helper(

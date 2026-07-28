@@ -145,6 +145,7 @@ dependencies = [
  "num-bigint",
  "serde",
  "serde_derive",
+ "sha2",
  "simple_asn1",
  "tempfile",
  "time",

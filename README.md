@@ -81,6 +81,7 @@ This project contains code derived from:
 - 2026-04-16: Support sign helper config input
 - 2026-04-16: Ime flag support svn
 - 2026-05-18: Rename the Rust dependency crate import for compatibility with two versions of the auth manifest generation tool, and remove unused dependencies: caliptra-drivers and caliptra-image-elf.
+- 2026-07-28: Add LMS dual-mode signing support, selecting between the Caliptra zero-leaf and full RFC 8554 authentication tree construction to match the configured LMS public key.
                                                 
 #### tools/cptra_2x/auth-manifest
 - 2026-03-05: Add load stage field support in manifest flags.
