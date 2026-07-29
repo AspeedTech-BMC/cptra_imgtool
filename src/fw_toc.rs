@@ -35,7 +35,6 @@ pub const FILENAME_LEN: usize = 64;
 #[repr(C)]
 #[derive(Debug, Clone, Copy, FromBytes, IntoBytes, Immutable)]
 pub struct FlashHeader {
-    pub magic: u32,
     pub version: u16,
     pub image_count: u16,
     pub image_headers_offset: u32,
@@ -167,7 +166,6 @@ pub fn create_fw_toc_from_flash_image(
 
     // Read FlashHeader
     let mut header = read_flash_header(&mut flash_file)?;
-    header.magic = TOC_HEADER_MAGIC;
     header.header_checksum =
         calculate_checksum(header.as_bytes()[..offset_of!(FlashHeader, header_checksum)].as_ref());
     debug!("TOC HEADER = {:#?}", header);
