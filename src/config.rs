@@ -97,6 +97,12 @@ pub(crate) struct AuthManifestConfigFromFile {
     pub image_metadata_list: Vec<ImageMetadataConfigFromFile>,
 
     pub sign_helper: Option<AspeedAuthManifestSignHelper>,
+
+    /* Digest of the caliptra runtime firmware image (image_runtime_list.caliptra_file).
+    Not part of the upstream caliptra manifest format; kept only so this tool can detect
+    when the caliptra runtime firmware changes between runs. Unknown fields are ignored
+    by the external auth-manifest-app parser, so this is safe to persist alongside it. */
+    pub caliptra_runtime_digest: Option<String>,
 }
 
 /* Aspeed defined configuration toml file */
@@ -289,6 +295,20 @@ fn compare_firmware_image_digests(
     changes
 }
 
+fn compare_caliptra_runtime_digest(
+    previous: &AuthManifestConfigFromFile,
+    current: &AuthManifestConfigFromFile,
+) -> Option<(Option<String>, Option<String>)> {
+    if previous.caliptra_runtime_digest != current.caliptra_runtime_digest {
+        Some((
+            previous.caliptra_runtime_digest.clone(),
+            current.caliptra_runtime_digest.clone(),
+        ))
+    } else {
+        None
+    }
+}
+
 fn filename_for_display(file: Option<&str>) -> String {
     file.and_then(|path| Path::new(path).file_name())
         .and_then(|filename| filename.to_str())
@@ -296,11 +316,15 @@ fn filename_for_display(file: Option<&str>) -> String {
         .unwrap_or_else(|| "<not in current config>".to_string())
 }
 
-fn print_firmware_image_digest_changes(previous_cfg_path: &Path, changes: &[FirmwareImageChange]) {
+fn print_firmware_image_digest_changes(
+    previous_cfg_path: &Path,
+    changes: &[FirmwareImageChange],
+    caliptra_runtime_change: Option<(&str, &Option<String>, &Option<String>)>,
+) {
     println!("=========================================================== FirmwareImageChanges ===========================================================");
     println!("Previous config: {}", previous_cfg_path.display());
 
-    if changes.is_empty() {
+    if changes.is_empty() && caliptra_runtime_change.is_none() {
         println!("FirmwareChange: no firmware image digest changes detected.");
         return;
     }
@@ -335,6 +359,19 @@ fn print_firmware_image_digest_changes(previous_cfg_path: &Path, changes: &[Firm
         println!(
             "FirmwareChange[{:>2}]: type={} fw_id={:#010X} filename={}",
             idx, kind, change.fw_id, filename
+        );
+    }
+
+    if let Some((file, old_digest, new_digest)) = caliptra_runtime_change {
+        let kind = format!("{:<8}", "MODIFIED").bright_magenta().bold();
+        let filename = filename_for_display(Some(file)).bright_yellow().bold();
+
+        println!(
+            "FirmwareChange[cptra_fw]: type={} filename={} old_digest={} new_digest={}",
+            kind,
+            filename,
+            old_digest.as_deref().unwrap_or("<none>"),
+            new_digest.as_deref().unwrap_or("<none>")
         );
     }
 }
@@ -659,6 +696,18 @@ impl AspeedAuthManifestConfigFromFile {
             })
             .collect::<Result<Vec<_>>>()?;
         cfg.sign_helper = self.sign_helper.clone();
+        cfg.caliptra_runtime_digest = if self.image_runtime_list.caliptra_file.is_empty() {
+            None
+        } else {
+            let data = fs::read(&self.image_runtime_list.caliptra_file).with_context(|| {
+                format!(
+                    "Failed to read caliptra runtime file {}",
+                    self.image_runtime_list.caliptra_file
+                )
+            })?;
+            let data_align = pad_to_aligned(data, 0, 4);
+            Some(hex::encode(Sha384::digest(&data_align)))
+        };
 
         Ok(cfg)
     }
@@ -677,7 +726,15 @@ impl AspeedAuthManifestConfigFromFile {
                     &cfg,
                     &self.image_files_by_fw_id(),
                 );
-                print_firmware_image_digest_changes(caliptra_cfg, &changes);
+                let caliptra_runtime_change =
+                    compare_caliptra_runtime_digest(&previous_cfg, &cfg);
+                print_firmware_image_digest_changes(
+                    caliptra_cfg,
+                    &changes,
+                    caliptra_runtime_change.as_ref().map(|(old, new)| {
+                        (self.image_runtime_list.caliptra_file.as_str(), old, new)
+                    }),
+                );
             }
             Ok(None) => {
                 println!(
@@ -788,6 +845,37 @@ mod tests {
     }
 
     #[test]
+    fn compare_caliptra_runtime_digest_detects_change() {
+        let previous = AuthManifestConfigFromFile {
+            caliptra_runtime_digest: Some("old-digest".to_string()),
+            ..Default::default()
+        };
+        let current = AuthManifestConfigFromFile {
+            caliptra_runtime_digest: Some("new-digest".to_string()),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            compare_caliptra_runtime_digest(&previous, &current),
+            Some((Some("old-digest".to_string()), Some("new-digest".to_string())))
+        );
+    }
+
+    #[test]
+    fn compare_caliptra_runtime_digest_ignores_unchanged() {
+        let previous = AuthManifestConfigFromFile {
+            caliptra_runtime_digest: Some("same".to_string()),
+            ..Default::default()
+        };
+        let current = AuthManifestConfigFromFile {
+            caliptra_runtime_digest: Some("same".to_string()),
+            ..Default::default()
+        };
+
+        assert!(compare_caliptra_runtime_digest(&previous, &current).is_none());
+    }
+
+    #[test]
     fn filename_for_display_strips_directory() {
         assert_eq!(
             filename_for_display(Some("prebuilt/ast2700-default/atf.bin")),
@@ -860,6 +948,26 @@ mod tests {
         assert_eq!(image.image_load_address, Some(0x1000));
         assert_eq!(image.image_staging_address, Some(0x2000));
         assert_eq!(image.classification, Some(5));
+        assert_eq!(caliptra_cfg.caliptra_runtime_digest, None);
+    }
+
+    #[test]
+    fn build_caliptra_cfg_hashes_caliptra_runtime_file() {
+        let tmp = tempfile::tempdir().unwrap();
+        let runtime_path = tmp.path().join("caliptra-fw.bin");
+        fs::write(&runtime_path, [0x11, 0x22, 0x33]).unwrap();
+        let expected_digest = hex::encode(Sha384::digest([0x11, 0x22, 0x33, 0x00]));
+        let cfg = AspeedAuthManifestConfigFromFile {
+            image_runtime_list: AspeedImageRuntimeConfigFromFile {
+                caliptra_file: runtime_path.to_string_lossy().to_string(),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        let caliptra_cfg = cfg.build_caliptra_cfg().unwrap();
+
+        assert_eq!(caliptra_cfg.caliptra_runtime_digest, Some(expected_digest));
     }
 }
 
