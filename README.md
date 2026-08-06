@@ -71,7 +71,7 @@ This project contains code derived from:
   - Path: tools/cptra_2x/auth-manifest
   - Upstream License: Apache License 2.0
   - Upstream Repository: https://github.com/chipsalliance/caliptra-sw
-  - Upstream Commit: <879608b901cc60a68f4e52441e3c494605d08f35>
+  - Upstream Commit: <4892e5bec3744c87b5f15648137ca71ce92154f8>
 
 ### Modifications
 #### tools/cptra_1x/auth-manifest

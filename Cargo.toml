@@ -72,13 +72,13 @@ caliptra-image-serde-1x = {package = "caliptra-image-serde", git = "https://gith
 caliptra-image-types-1x = {package = "caliptra-image-types", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9", default-features = false}
 caliptra-lms-types-1x = {package = "caliptra-lms-types", git = "https://github.com/chipsalliance/caliptra-sw", rev = "951209a31c4373658f89e4b1211f3a557731c7d9"}
 
-caliptra-error-2x = {package = "caliptra-error", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35", default-features = false}
-caliptra-image-crypto-2x = {package = "caliptra-image-crypto", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
-caliptra-image-fake-keys-2x = {package = "caliptra-image-fake-keys", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
-caliptra-image-gen-2x = {package = "caliptra-image-gen", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
-caliptra-image-serde-2x = {package = "caliptra-image-serde", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
-caliptra-image-types-2x = {package = "caliptra-image-types", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35", default-features = false}
-caliptra-lms-types-2x = {package = "caliptra-lms-types", git = "https://github.com/chipsalliance/caliptra-sw", rev = "879608b901cc60a68f4e52441e3c494605d08f35"}
+caliptra-error-2x = {package = "caliptra-error", git = "https://github.com/chipsalliance/caliptra-sw", rev = "4892e5bec3744c87b5f15648137ca71ce92154f8", default-features = false}
+caliptra-image-crypto-2x = {package = "caliptra-image-crypto", git = "https://github.com/chipsalliance/caliptra-sw", rev = "4892e5bec3744c87b5f15648137ca71ce92154f8"}
+caliptra-image-fake-keys-2x = {package = "caliptra-image-fake-keys", git = "https://github.com/chipsalliance/caliptra-sw", rev = "4892e5bec3744c87b5f15648137ca71ce92154f8"}
+caliptra-image-gen-2x = {package = "caliptra-image-gen", git = "https://github.com/chipsalliance/caliptra-sw", rev = "4892e5bec3744c87b5f15648137ca71ce92154f8"}
+caliptra-image-serde-2x = {package = "caliptra-image-serde", git = "https://github.com/chipsalliance/caliptra-sw", rev = "4892e5bec3744c87b5f15648137ca71ce92154f8"}
+caliptra-image-types-2x = {package = "caliptra-image-types", git = "https://github.com/chipsalliance/caliptra-sw", rev = "4892e5bec3744c87b5f15648137ca71ce92154f8", default-features = false}
+caliptra-lms-types-2x = {package = "caliptra-lms-types", git = "https://github.com/chipsalliance/caliptra-sw", rev = "4892e5bec3744c87b5f15648137ca71ce92154f8"}
 
 [patch.crates-io]
 # Fork of https://github.com/teythoon/rust-openssl.git/justus/pqc
