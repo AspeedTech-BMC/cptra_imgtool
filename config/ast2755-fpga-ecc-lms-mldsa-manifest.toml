@@ -213,7 +213,8 @@ image_staging_address = 0x0000_0000_0000_0000
 classification = 0
 
 [[image_metadata_list]]
-file = "zephyr-mcu-runtime.bin"
+# file = "zephyr-mcu-runtime.bin"
+file = ""
 source = 1
 fw_id = 0x100d
 ignore_auth_check = false
