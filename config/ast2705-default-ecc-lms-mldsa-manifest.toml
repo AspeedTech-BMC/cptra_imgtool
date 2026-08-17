@@ -4,7 +4,7 @@
 version = 1
 flags = 0
 security_version = 0
-prj_name = "ast2755-fpga"
+prj_name = "ast2705-default"
 padding_align_size = 256
 padding_out_folder = "out/padding_output"
 
@@ -204,19 +204,6 @@ classification = 0
 file = "tsp.bin"
 source = 1
 fw_id = 0x100c
-ignore_auth_check = false
-load_stage = 0
-exec_bit = 0
-component_id = 0
-image_load_address = 0x0000_0000_0000_0000
-image_staging_address = 0x0000_0000_0000_0000
-classification = 0
-
-[[image_metadata_list]]
-# file = "zephyr-mcu-runtime.bin"
-file = ""
-source = 1
-fw_id = 0x100d
 ignore_auth_check = false
 load_stage = 0
 exec_bit = 0
