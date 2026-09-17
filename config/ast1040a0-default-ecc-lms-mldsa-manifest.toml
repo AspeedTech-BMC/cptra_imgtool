@@ -189,7 +189,7 @@ image_staging_address = 0x0000000000000000
 classification = 0
 
 [[image_metadata_list]]
-file = "zephyr-shell-module.bin"
+file = ""
 source = 1
 fw_id = 0x100b
 ignore_auth_check = false
