@@ -9,8 +9,8 @@ padding_align_size = 256
 padding_out_folder = "out/padding_output"
 
 [vendor_fw_key_config]
-ecc_pub_key = "vnd-fw-ecc-pub-key-1.pem"
-ecc_priv_key = "vnd-fw-ecc-priv-key-1.pem"
+ecc_pub_key = "vnd-fw-ecc-pub-key-0.pem"
+ecc_priv_key = "vnd-fw-ecc-priv-key-0.pem"
 lms_pub_key = "vnd-fw-lms-pub-key-0.pem"
 lms_priv_key = "vnd-fw-lms-priv-key-0.pem"
 mldsa_pub_key = "vnd-fw-mldsa-pub-key-0.bin"

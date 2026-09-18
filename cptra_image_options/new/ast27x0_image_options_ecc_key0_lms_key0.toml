@@ -1,6 +1,6 @@
-fmc_version = 0x0
+fmc_version = 0x8C0
 fmc_svn = 0x0
-app_version = 0x0
+app_version = 0x1030000
 app_svn = 0x0
 
 [vendor_config]
